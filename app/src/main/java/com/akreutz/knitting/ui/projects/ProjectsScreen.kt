@@ -375,7 +375,7 @@ private fun StatusChip(
 }
 
 @Composable
-private fun ProjectStatus.accentColor(): Color = when (this) {
+internal fun ProjectStatus.accentColor(): Color = when (this) {
     ProjectStatus.Created -> MaterialTheme.colorScheme.outlineVariant
     ProjectStatus.InProgress -> MaterialTheme.colorScheme.secondary
     ProjectStatus.Finished -> MaterialTheme.colorScheme.primary

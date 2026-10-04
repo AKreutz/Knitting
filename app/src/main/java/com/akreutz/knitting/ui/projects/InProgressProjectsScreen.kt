@@ -33,21 +33,11 @@ fun InProgressProjectsScreen(
     var projectToResetId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToReset = inProgress.firstOrNull { it.id == projectToResetId }
 
+    var projectToFinishId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val projectToFinish = inProgress.firstOrNull { it.id == projectToFinishId }
+
     var projectToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToEdit = inProgress.firstOrNull { it.id == projectToEditId }
-
-    var stepToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
-    val stepToDelete = stepsByProject.values.flatten().firstOrNull { it.id == stepToDeleteId }
-    if (stepToDelete != null) {
-        DeleteStepDialog(
-            stepName = stepToDelete.name,
-            onDismiss = { stepToDeleteId = null },
-            onConfirm = {
-                viewModel.deleteStep(stepToDelete)
-                stepToDeleteId = null
-            },
-        )
-    }
 
     if (projectToEdit != null) {
         AddProjectDialog(
@@ -59,6 +49,17 @@ fun InProgressProjectsScreen(
             onConfirm = { name, description ->
                 viewModel.editProject(projectToEdit, name, description)
                 projectToEditId = null
+            },
+        )
+    }
+
+    if (projectToFinish != null) {
+        FinishProjectDialog(
+            projectName = projectToFinish.name,
+            onDismiss = { projectToFinishId = null },
+            onConfirm = {
+                viewModel.setStatus(projectToFinish, ProjectStatus.Finished)
+                projectToFinishId = null
             },
         )
     }
@@ -88,15 +89,15 @@ fun InProgressProjectsScreen(
                 verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 items(inProgress, key = { it.id }) { project ->
-                    ProjectCard(
+                    InProgressProjectCard(
                         project = project,
                         steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
                         onStepProgressChange = viewModel::setStepProgress,
                         onPatternCellsChange = viewModel::setPatternCells,
-                        onStepLongClick = { stepToDeleteId = it.id },
-                        onLongClick = { projectToResetId = project.id },
                         onEditClick = { projectToEditId = project.id },
+                        onResetClick = { projectToResetId = project.id },
+                        onFinishClick = { projectToFinishId = project.id },
                     )
                 }
             }

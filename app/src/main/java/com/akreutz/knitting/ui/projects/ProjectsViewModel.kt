@@ -70,7 +70,11 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
             ProjectStatus.Finished -> project.startedAt
         }
         val completedAt = if (status == ProjectStatus.Finished) project.completedAt ?: now else null
-        viewModelScope.launch { dao.updateStatus(project.id, status, startedAt, completedAt) }
+        viewModelScope.launch {
+            dao.updateStatus(project.id, status, startedAt, completedAt)
+            // A reset starts the project over, so its step counters go back to 0 too.
+            if (status == ProjectStatus.Created) dao.resetStepProgress(project.id)
+        }
     }
 
     fun deleteProject(project: Project) {

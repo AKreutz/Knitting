@@ -17,8 +17,11 @@
     <string name="start_project_message">Start \"%1$s\"? Its status will change to In progress.</string>
     <string name="start">Start</string>
     <string name="reset_project_title">Reset project?</string>
-    <string name="reset_project_message">Reset \"%1$s\"? Its status will change back to Created.</string>
+    <string name="reset_project_message">Reset \"%1$s\"? Its status will change back to Created and its step progress will be cleared.</string>
     <string name="reset">Reset</string>
+    <string name="finish">Finish</string>
+    <string name="finish_project_title">Finish project?</string>
+    <string name="finish_project_message">Mark \"%1$s\" as finished? Today will be saved as its completion date.</string>
     <string name="delete_project_title">Delete project?</string>
     <string name="delete_project_message">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="expand_step">Show step details</string>
@@ -32,6 +35,11 @@
     <string name="cancel">Cancel</string>
     <string name="new_project">New project</string>
     <string name="day_count">Day %1$d</string>
+    <string name="current_step">Current step</string>
+    <string name="all_steps_done">All steps done</string>
+    <string name="previous_steps">Previous steps (%1$d)</string>
+    <string name="next_steps">Next steps (%1$d)</string>
+    <string name="steps_done_summary">%1$d of %2$d steps done</string>
     <string name="add_step">Add step</string>
     <string name="add_step_title">Add step</string>
     <string name="step_target_rows">Target rows</string>

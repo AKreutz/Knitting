@@ -103,7 +103,7 @@ internal fun StepRow(
 
 /** Plural of the unit a step's counter counts, or null for steps without a counter. */
 @PluralsRes
-private fun Step.unitRes(): Int? = when (type) {
+internal fun Step.unitRes(): Int? = when (type) {
     StepType.CastOn -> R.plurals.stitches_count
     StepType.Increases -> R.plurals.increases_count
     StepType.Decreases -> R.plurals.decreases_count
@@ -112,10 +112,10 @@ private fun Step.unitRes(): Int? = when (type) {
 }
 
 /** How much a tap on a step's counter adds or removes. */
-private fun Step.increment(): Int = if (type == StepType.CastOn) 10 else 1
+internal fun Step.increment(): Int = if (type == StepType.CastOn) 10 else 1
 
 /** The step's entered details that are worth showing once it is expanded. */
-private fun Step.details(): String = when (type) {
+internal fun Step.details(): String = when (type) {
     StepType.CastOn -> listOfNotNull(method, needleSize)
     StepType.Increases, StepType.Decreases -> listOfNotNull(pattern)
     else -> emptyList()
@@ -142,7 +142,7 @@ private fun headerText(step: Step, showProgress: Boolean): String {
 }
 
 @Composable
-private fun StepCounter(
+internal fun StepCounter(
     step: Step,
     onProgressChange: ((Step, Int) -> Unit)?,
     modifier: Modifier = Modifier,

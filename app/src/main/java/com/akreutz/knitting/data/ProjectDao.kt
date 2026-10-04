@@ -29,6 +29,9 @@ interface ProjectDao {
     @Query("UPDATE steps SET progress = :progress WHERE id = :id")
     suspend fun updateStepProgress(id: Long, progress: Int)
 
+    @Query("UPDATE steps SET progress = 0 WHERE projectId = :projectId")
+    suspend fun resetStepProgress(projectId: Long)
+
     @Delete
     suspend fun delete(project: Project)
 
