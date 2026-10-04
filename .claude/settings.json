@@ -1,0 +1,30 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(git commit *)",
+            "command": "./gradlew lint >&2 || exit 2",
+            "timeout": 600,
+            "statusMessage": "Running lint before commit..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "ask": [
+      "Bash(adb *)",
+      "Bash(*adb.exe *)",
+      "Bash(./gradlew *install*)",
+      "Bash(./gradlew *connected*)",
+      "Bash(gradlew *install*)",
+      "Bash(gradlew *connected*)",
+      "Bash(gradlew.bat *install*)",
+      "Bash(gradlew.bat *connected*)"
+    ]
+  }
+}
