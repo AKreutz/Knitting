@@ -20,6 +20,9 @@ interface ProjectDao {
     @Insert
     suspend fun insertStep(step: Step): Long
 
+    @Delete
+    suspend fun deleteStep(step: Step)
+
     @Query("UPDATE steps SET patternCells = :patternCells WHERE id = :id")
     suspend fun updatePatternCells(id: Long, patternCells: String)
 
@@ -36,7 +39,4 @@ interface ProjectDao {
         "UPDATE projects SET status = :status, startedAt = :startedAt, completedAt = :completedAt WHERE id = :id",
     )
     suspend fun updateStatus(id: Long, status: ProjectStatus, startedAt: Long?, completedAt: Long?)
-
-    @Query("UPDATE projects SET rowCount = :rowCount WHERE id = :id")
-    suspend fun updateRowCount(id: Long, rowCount: Int)
 }

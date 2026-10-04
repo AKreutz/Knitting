@@ -46,6 +46,10 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun deleteStep(step: Step) {
+        viewModelScope.launch { dao.deleteStep(step) }
+    }
+
     fun setPatternCells(step: Step, cells: String) {
         viewModelScope.launch { dao.updatePatternCells(step.id, cells) }
     }
@@ -66,10 +70,6 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         }
         val completedAt = if (status == ProjectStatus.Finished) project.completedAt ?: now else null
         viewModelScope.launch { dao.updateStatus(project.id, status, startedAt, completedAt) }
-    }
-
-    fun setRowCount(project: Project, rowCount: Int) {
-        viewModelScope.launch { dao.updateRowCount(project.id, rowCount.coerceAtLeast(0)) }
     }
 
     fun deleteProject(project: Project) {

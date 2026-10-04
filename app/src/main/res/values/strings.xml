@@ -21,6 +21,10 @@
     <string name="reset">Reset</string>
     <string name="delete_project_title">Delete project?</string>
     <string name="delete_project_message">Delete \"%1$s\"? This can\'t be undone.</string>
+    <string name="expand_step">Show step details</string>
+    <string name="collapse_step">Hide step details</string>
+    <string name="delete_step_title">Delete step?</string>
+    <string name="delete_step_message">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="delete">Delete</string>
     <string name="edit_project_title">Edit project</string>
     <string name="save">Save</string>
@@ -28,8 +32,6 @@
     <string name="cancel">Cancel</string>
     <string name="new_project">New project</string>
     <string name="day_count">Day %1$d</string>
-    <string name="add_row">Add row</string>
-    <string name="remove_row">Remove row</string>
     <string name="add_step">Add step</string>
     <string name="add_step_title">Add step</string>
     <string name="step_target_rows">Target rows</string>

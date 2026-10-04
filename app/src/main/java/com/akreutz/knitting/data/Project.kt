@@ -13,6 +13,4 @@ data class Project(
     val startedAt: Long? = null,
     /** Epoch millis of when the project was finished; null unless its status is Finished. */
     val completedAt: Long? = null,
-    /** Rows knitted so far, counted by hand while the project is in progress. */
-    val rowCount: Int = 0,
 )

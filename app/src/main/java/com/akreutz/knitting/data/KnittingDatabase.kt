@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Project::class, Step::class], version = 12, exportSchema = false)
+@Database(entities = [Project::class, Step::class], version = 13, exportSchema = false)
 abstract class KnittingDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
 
@@ -34,8 +34,8 @@ abstract class KnittingDatabase : RoomDatabase() {
 
             private fun seed(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "INSERT INTO projects (name, description, status, rowCount) " +
-                        "VALUES ('Sample scarf', 'Seed project for development', 'Created', 0)",
+                    "INSERT INTO projects (name, description, status) " +
+                        "VALUES ('Sample scarf', 'Seed project for development', 'Created')",
                 )
             }
         }

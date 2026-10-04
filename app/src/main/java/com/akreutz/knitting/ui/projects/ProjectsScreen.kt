@@ -24,11 +24,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -72,6 +70,8 @@ fun ProjectsScreen(
     val stepsByProject by viewModel.stepsByProject.collectAsState()
     var projectToAddStepId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToAddStep = projects.firstOrNull { it.id == projectToAddStepId }
+    var stepToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val stepToDelete = stepsByProject.values.flatten().firstOrNull { it.id == stepToDeleteId }
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var projectToStartId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToStart = projects.firstOrNull { it.id == projectToStartId }
@@ -89,8 +89,20 @@ fun ProjectsScreen(
         onProjectEditClick = { projectToEditId = it.id },
         onAddStepClick = { projectToAddStepId = it.id },
         onPatternCellsChange = viewModel::setPatternCells,
+        onStepLongClick = { stepToDeleteId = it.id },
         modifier = modifier,
     )
+
+    if (stepToDelete != null) {
+        DeleteStepDialog(
+            stepName = stepToDelete.name,
+            onDismiss = { stepToDeleteId = null },
+            onConfirm = {
+                viewModel.deleteStep(stepToDelete)
+                stepToDeleteId = null
+            },
+        )
+    }
 
     if (projectToAddStep != null) {
         AddStepDialog(
@@ -159,6 +171,7 @@ private fun ProjectsContent(
     onProjectEditClick: (Project) -> Unit,
     onAddStepClick: (Project) -> Unit,
     onPatternCellsChange: (Step, String) -> Unit,
+    onStepLongClick: (Step) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -190,6 +203,7 @@ private fun ProjectsContent(
                         steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
                         onPatternCellsChange = onPatternCellsChange,
+                        onStepLongClick = onStepLongClick,
                         onAddStepClick = if (project.status == ProjectStatus.Created) {
                             { onAddStepClick(project) }
                         } else {
@@ -227,9 +241,9 @@ internal fun ProjectCard(
     onLongClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
     onAddStepClick: (() -> Unit)? = null,
-    onRowCountChange: ((Int) -> Unit)? = null,
     onStepProgressChange: ((Step, Int) -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
+    onStepLongClick: ((Step) -> Unit)? = null,
 ) {
     val shape = MaterialTheme.shapes.medium
     // Card(onClick) has no long-click, so clip to the card shape and add the gestures ourselves.
@@ -282,6 +296,7 @@ internal fun ProjectCard(
                         inProgress = project.status == ProjectStatus.InProgress,
                         onProgressChange = onStepProgressChange,
                         onPatternCellsChange = onPatternCellsChange,
+                        onLongClick = onStepLongClick,
                         modifier = Modifier.padding(top = Spacing.sm),
                     )
                 }
@@ -292,12 +307,8 @@ internal fun ProjectCard(
                         Text(stringResource(R.string.add_step))
                     }
                 }
-                if (project.status == ProjectStatus.InProgress && onRowCountChange != null) {
-                    RowCounter(
-                        project = project,
-                        onRowCountChange = onRowCountChange,
-                        modifier = Modifier.padding(top = Spacing.md),
-                    )
+                if (project.status == ProjectStatus.InProgress) {
+                    DayCount(project)
                 }
             }
         }
@@ -320,44 +331,17 @@ private fun DatesLine(project: Project) {
     )
 }
 
-/** Row counter and day count shown on in-progress cards. */
+/** How many days the project has been in progress, shown on in-progress cards. */
 @Composable
-private fun RowCounter(
-    project: Project,
-    onRowCountChange: (Int) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = pluralStringResource(R.plurals.rows_count, project.rowCount, project.rowCount),
-                style = MaterialTheme.typography.titleMedium,
-            )
-            project.startedAt?.let { startedAt ->
-                val days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startedAt).toInt() + 1
-                Text(
-                    text = stringResource(R.string.day_count, days),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        FilledTonalIconButton(
-            onClick = { onRowCountChange(project.rowCount - 1) },
-            enabled = project.rowCount > 0,
-        ) {
-            Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.remove_row))
-        }
-        FilledTonalIconButton(
-            onClick = { onRowCountChange(project.rowCount + 1) },
-            modifier = Modifier.padding(start = Spacing.sm),
-        ) {
-            Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.add_row))
-        }
-    }
+private fun DayCount(project: Project) {
+    val startedAt = project.startedAt ?: return
+    val days = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - startedAt).toInt() + 1
+    Text(
+        text = stringResource(R.string.day_count, days),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = Spacing.xs),
+    )
 }
 
 @Composable
@@ -420,6 +404,7 @@ private fun ProjectsContentPreview() {
             onProjectEditClick = {},
             onAddStepClick = {},
             onPatternCellsChange = { _, _ -> },
+            onStepLongClick = {},
         )
     }
 }

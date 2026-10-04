@@ -36,6 +36,19 @@ fun InProgressProjectsScreen(
     var projectToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToEdit = inProgress.firstOrNull { it.id == projectToEditId }
 
+    var stepToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val stepToDelete = stepsByProject.values.flatten().firstOrNull { it.id == stepToDeleteId }
+    if (stepToDelete != null) {
+        DeleteStepDialog(
+            stepName = stepToDelete.name,
+            onDismiss = { stepToDeleteId = null },
+            onConfirm = {
+                viewModel.deleteStep(stepToDelete)
+                stepToDeleteId = null
+            },
+        )
+    }
+
     if (projectToEdit != null) {
         AddProjectDialog(
             initialName = projectToEdit.name,
@@ -79,9 +92,9 @@ fun InProgressProjectsScreen(
                         project = project,
                         steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
-                        onRowCountChange = { viewModel.setRowCount(project, it) },
                         onStepProgressChange = viewModel::setStepProgress,
                         onPatternCellsChange = viewModel::setPatternCells,
+                        onStepLongClick = { stepToDeleteId = it.id },
                         onLongClick = { projectToResetId = project.id },
                         onEditClick = { projectToEditId = project.id },
                     )
