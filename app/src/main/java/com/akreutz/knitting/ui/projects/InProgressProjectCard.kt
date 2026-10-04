@@ -16,14 +16,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -56,7 +54,6 @@ internal fun InProgressProjectCard(
     project: Project,
     steps: List<Step>,
     modifier: Modifier = Modifier,
-    onEditClick: (() -> Unit)? = null,
     onResetClick: (() -> Unit)? = null,
     onFinishClick: (() -> Unit)? = null,
     onStepProgressChange: ((Step, Int) -> Unit)? = null,
@@ -92,15 +89,6 @@ internal fun InProgressProjectCard(
                                 text = it,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
-                    }
-                    if (onEditClick != null) {
-                        IconButton(onClick = onEditClick) {
-                            Icon(
-                                Icons.Filled.Edit,
-                                contentDescription = stringResource(R.string.edit_project_title),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -273,7 +261,6 @@ private fun CollapsibleSteps(
                     inProgress = true,
                     onProgressChange = onProgressChange,
                     onPatternCellsChange = onPatternCellsChange,
-                    onLongClick = null,
                     modifier = Modifier.padding(top = Spacing.sm),
                 )
             }

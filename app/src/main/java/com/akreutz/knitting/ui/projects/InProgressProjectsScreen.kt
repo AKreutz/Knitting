@@ -36,23 +36,6 @@ fun InProgressProjectsScreen(
     var projectToFinishId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToFinish = inProgress.firstOrNull { it.id == projectToFinishId }
 
-    var projectToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
-    val projectToEdit = inProgress.firstOrNull { it.id == projectToEditId }
-
-    if (projectToEdit != null) {
-        AddProjectDialog(
-            initialName = projectToEdit.name,
-            initialDescription = projectToEdit.description.orEmpty(),
-            titleRes = R.string.edit_project_title,
-            confirmRes = R.string.save,
-            onDismiss = { projectToEditId = null },
-            onConfirm = { name, description ->
-                viewModel.editProject(projectToEdit, name, description)
-                projectToEditId = null
-            },
-        )
-    }
-
     if (projectToFinish != null) {
         FinishProjectDialog(
             projectName = projectToFinish.name,
@@ -95,7 +78,6 @@ fun InProgressProjectsScreen(
                         modifier = Modifier.animateItem(),
                         onStepProgressChange = viewModel::setStepProgress,
                         onPatternCellsChange = viewModel::setPatternCells,
-                        onEditClick = { projectToEditId = project.id },
                         onResetClick = { projectToResetId = project.id },
                         onFinishClick = { projectToFinishId = project.id },
                     )

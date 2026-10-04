@@ -26,8 +26,6 @@
     <string name="delete_project_message">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="expand_step">Show step details</string>
     <string name="collapse_step">Hide step details</string>
-    <string name="delete_step_title">Delete step?</string>
-    <string name="delete_step_message">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="delete">Delete</string>
     <string name="edit_project_title">Edit project</string>
     <string name="save">Save</string>
@@ -40,7 +38,13 @@
     <string name="previous_steps">Previous steps (%1$d)</string>
     <string name="next_steps">Next steps (%1$d)</string>
     <string name="steps_done_summary">%1$d of %2$d steps done</string>
+    <plurals name="steps_count">
+        <item quantity="one">%1$d step</item>
+        <item quantity="other">%1$d steps</item>
+    </plurals>
     <string name="add_step">Add step</string>
+    <string name="project_steps">Steps</string>
+    <string name="remove_step">Remove step</string>
     <string name="add_step_title">Add step</string>
     <string name="step_target_rows">Target rows</string>
     <string name="step_name">Step name</string>

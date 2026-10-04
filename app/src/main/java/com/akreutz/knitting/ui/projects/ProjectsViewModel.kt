@@ -24,34 +24,22 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         .map { steps -> steps.groupBy { it.projectId } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
-    fun addStep(project: Project, newStep: NewStep) {
-        val trimmedName = newStep.name.trim()
-        if (trimmedName.isEmpty()) return
-        viewModelScope.launch {
-            dao.insertStep(
-                Step(
-                    projectId = project.id,
-                    name = trimmedName,
-                    type = newStep.type,
-                    targetRows = newStep.targetRows,
-                    stitchCount = newStep.stitchCount,
-                    method = newStep.method,
-                    needleSize = newStep.needleSize,
-                    shapingCount = newStep.shapingCount,
-                    pattern = newStep.pattern,
-                    patternType = newStep.patternType,
-                    rowPattern = newStep.rowPattern,
-                    patternRows = newStep.patternRows,
-                    patternColumns = newStep.patternColumns,
-                    patternRepeats = newStep.patternRepeats,
-                ),
-            )
-        }
-    }
-
-    fun deleteStep(step: Step) {
-        viewModelScope.launch { dao.deleteStep(step) }
-    }
+    private fun NewStep.toStep(projectId: Long) = Step(
+        projectId = projectId,
+        name = name.trim(),
+        type = type,
+        targetRows = targetRows,
+        stitchCount = stitchCount,
+        method = method,
+        needleSize = needleSize,
+        shapingCount = shapingCount,
+        pattern = pattern,
+        patternType = patternType,
+        rowPattern = rowPattern,
+        patternRows = patternRows,
+        patternColumns = patternColumns,
+        patternRepeats = patternRepeats,
+    )
 
     fun setPatternCells(step: Step, cells: String) {
         viewModelScope.launch { dao.updatePatternCells(step.id, cells) }
@@ -83,24 +71,33 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { dao.delete(project) }
     }
 
-    fun editProject(project: Project, name: String, description: String) {
+    fun editProject(
+        project: Project,
+        name: String,
+        description: String,
+        addedSteps: List<NewStep> = emptyList(),
+        removedSteps: List<Step> = emptyList(),
+    ) {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return
         viewModelScope.launch {
             dao.updateDetails(project.id, trimmedName, description.trim().ifEmpty { null })
+            removedSteps.forEach { dao.deleteStep(it) }
+            addedSteps.forEach { dao.insertStep(it.toStep(project.id)) }
         }
     }
 
-    fun addProject(name: String, description: String) {
+    fun addProject(name: String, description: String, steps: List<NewStep> = emptyList()) {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return
         viewModelScope.launch {
-            dao.insert(
+            val projectId = dao.insert(
                 Project(
                     name = trimmedName,
                     description = description.trim().ifEmpty { null },
                 ),
             )
+            steps.forEach { dao.insertStep(it.toStep(projectId)) }
         }
     }
 }
