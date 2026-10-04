@@ -23,6 +23,8 @@ data class Step(
     val projectId: Long,
     val name: String,
     val type: StepType,
+    /** The yarn color used for this step, e.g. "Forest green"; applies to every step type. */
+    val color: String? = null,
     /** Number of rows this step should reach; unused by cast-on steps. */
     val targetRows: Int? = null,
     /** Cast-on: number of stitches to cast on. */

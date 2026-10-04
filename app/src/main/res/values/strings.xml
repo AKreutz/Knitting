@@ -57,6 +57,7 @@
     <string name="step_type_pattern">Pattern</string>
     <string name="step_stitch_count">Stitch count</string>
     <string name="step_method_optional">Method (optional)</string>
+    <string name="step_color_optional">Color (optional)</string>
     <string name="step_needle_size_optional">Needle size (optional)</string>
     <string name="step_increase_count">Number of increases</string>
     <string name="step_increase_pattern_optional">Increase pattern (optional)</string>

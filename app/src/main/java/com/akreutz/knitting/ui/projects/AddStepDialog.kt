@@ -40,6 +40,7 @@ import com.akreutz.knitting.ui.theme.KnittingTheme
 data class NewStep(
     val name: String,
     val type: StepType,
+    val color: String? = null,
     val targetRows: Int? = null,
     val stitchCount: Int? = null,
     val method: String? = null,
@@ -88,6 +89,7 @@ fun AddStepDialog(
     val defaultName = stringResource(R.string.step_default_name, stepNumber)
     var name by rememberSaveable { mutableStateOf(defaultName) }
     var type by rememberSaveable { mutableStateOf(StepType.PlainRows) }
+    var color by rememberSaveable { mutableStateOf("") }
     var targetRows by rememberSaveable { mutableStateOf("") }
     var stitchCount by rememberSaveable { mutableStateOf("") }
     var method by rememberSaveable { mutableStateOf("") }
@@ -147,7 +149,7 @@ fun AddStepDialog(
                 rowPattern = rowPattern.takeIf { type == StepType.PlainRows },
             )
         }
-    }
+    }?.copy(color = color.trim().ifEmpty { null })
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -167,6 +169,15 @@ fun AddStepDialog(
                     options = StepType.entries,
                     optionLabelRes = StepType::labelRes,
                     onSelect = { type = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
+                )
+                OutlinedTextField(
+                    value = color,
+                    onValueChange = { color = it },
+                    label = { Text(stringResource(R.string.step_color_optional)) },
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp),

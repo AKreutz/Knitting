@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Project::class, Step::class], version = 18, exportSchema = false)
+@Database(entities = [Project::class, Step::class], version = 19, exportSchema = false)
 abstract class KnittingDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
 

@@ -29,6 +29,7 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         projectId = projectId,
         name = name.trim(),
         type = type,
+        color = color,
         targetRows = targetRows,
         stitchCount = stitchCount,
         method = method,

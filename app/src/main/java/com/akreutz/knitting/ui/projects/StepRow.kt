@@ -114,11 +114,11 @@ internal fun Step.unitRes(): Int? = when (type) {
 internal fun Step.increment(): Int = if (type == StepType.CastOn) 10 else 1
 
 /** The step's entered details that are worth showing once it is expanded. */
-internal fun Step.details(): String = when (type) {
+internal fun Step.details(): String = (when (type) {
     StepType.CastOn -> listOfNotNull(method, needleSize)
     StepType.Increases, StepType.Decreases -> listOfNotNull(pattern)
     else -> emptyList()
-}.joinToString(" · ")
+} + listOfNotNull(color)).joinToString(" · ")
 
 /** The size, stitch pattern or target of a step, shown once it is expanded; null when there is none. */
 @Composable
