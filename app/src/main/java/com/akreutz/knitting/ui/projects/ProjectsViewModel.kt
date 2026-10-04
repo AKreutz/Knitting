@@ -7,6 +7,7 @@ import com.akreutz.knitting.data.KnittingDatabase
 import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.ProjectStatus
 import com.akreutz.knitting.data.Step
+import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,7 +48,21 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
 
     fun setStepProgress(step: Step, progress: Int) {
         val max = step.progressTarget() ?: return
-        viewModelScope.launch { dao.updateStepProgress(step.id, progress.coerceIn(0, max)) }
+        val clamped = progress.coerceIn(0, max)
+        viewModelScope.launch {
+            // Changing the repeat count by hand restarts the row count within the repeat.
+            if (step.type == StepType.Pattern) dao.updatePatternProgress(step.id, clamped, 0)
+            else dao.updateStepProgress(step.id, clamped)
+        }
+    }
+
+    /** Moves a pattern step one row forward or back; finishing a repeat's last row completes that repeat. */
+    fun stepPatternRow(step: Step, delta: Int) {
+        val rows = step.patternRows ?: return
+        val repeats = step.progressTarget() ?: return
+        // Linear position over all rows of all repeats keeps the wrap-around arithmetic in one place.
+        val position = (step.progress * rows + step.patternRow + delta).coerceIn(0, repeats * rows)
+        viewModelScope.launch { dao.updatePatternProgress(step.id, position / rows, position % rows) }
     }
 
     fun setStatus(project: Project, status: ProjectStatus) {

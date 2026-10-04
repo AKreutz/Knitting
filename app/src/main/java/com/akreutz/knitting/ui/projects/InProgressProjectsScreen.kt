@@ -78,6 +78,7 @@ fun InProgressProjectsScreen(
                         modifier = Modifier.animateItem(),
                         onStepProgressChange = viewModel::setStepProgress,
                         onPatternCellsChange = viewModel::setPatternCells,
+                        onPatternRowStep = viewModel::stepPatternRow,
                         onResetClick = { projectToResetId = project.id },
                         onFinishClick = { projectToFinishId = project.id },
                     )

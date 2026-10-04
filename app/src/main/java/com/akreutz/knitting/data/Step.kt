@@ -51,6 +51,8 @@ data class Step(
     val rowPattern: RowPattern? = null,
     /** Cast-on stitches, increases, decreases, plain rows or pattern repeats done so far, tracked while in progress. */
     val progress: Int = 0,
+    /** Pattern: rows of the current repeat already knitted, tracked while in progress. */
+    val patternRow: Int = 0,
 )
 
 /** What [Step.progress] counts up to, or null for step types that have no counter. */

@@ -71,6 +71,9 @@ private val PatternPalette = listOf(
     Color(0xFF3F5A7A),
 )
 
+/** Laid over the cells of completed colorwork rows so they read as done while keeping their colors. */
+private val CompletedRowCover = Color.Black.copy(alpha = 0.5f)
+
 /** Selected-tool value for the pan tool; non-negative values are palette indices. */
 private const val PAN_TOOL = -1
 
@@ -243,7 +246,8 @@ private fun DrawScope.drawStitch(stitch: Int, topLeft: Offset, cellPx: Float, co
 /**
  * A rows × columns grid the user paints by tapping or dragging, with a palette underneath: colors
  * for colorwork patterns, stitch symbols for cables. A grid that is not [editable] is only shown,
- * without the palette and the Edit button.
+ * without the palette and the Edit button. The bottom [completedRows] rows, which are knitted first,
+ * are marked as done: colorwork cells are dimmed, cable cells have their colors swapped.
  */
 @Composable
 internal fun PatternGrid(
@@ -254,6 +258,7 @@ internal fun PatternGrid(
     onCellsChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     editable: Boolean = true,
+    completedRows: Int = 0,
 ) {
     val cables = patternType == PatternType.Cables
     val size = rows * columns
@@ -436,11 +441,15 @@ internal fun PatternGrid(
                                         rowAxis.cellStart(row, cellPx),
                                     ) + offset
                                     val value = cells[row * columns + column].digitToInt()
+                                    val done = row >= rows - completedRows
                                     if (cables) {
-                                        drawRect(emptyColor, topLeft, cell)
-                                        if (value < 2) drawStitch(value, topLeft, cellPx, stitchColor)
+                                        drawRect(if (done) stitchColor else emptyColor, topLeft, cell)
+                                        if (value < 2) {
+                                            drawStitch(value, topLeft, cellPx, if (done) emptyColor else stitchColor)
+                                        }
                                     } else {
                                         drawRect(PatternPalette.getOrNull(value) ?: emptyColor, topLeft, cell)
+                                        if (done) drawRect(CompletedRowCover, topLeft, cell)
                                     }
                                 }
                             }
@@ -489,7 +498,7 @@ internal fun PatternGrid(
                                                 top = top,
                                                 right = offset.x + columnAxis.cellStart(end, cellPx) + cellPx,
                                                 bottom = top + cellPx,
-                                                color = stitchColor,
+                                                color = if (row >= rows - completedRows) emptyColor else stitchColor,
                                                 cellPx = cellPx,
                                             )
                                         }

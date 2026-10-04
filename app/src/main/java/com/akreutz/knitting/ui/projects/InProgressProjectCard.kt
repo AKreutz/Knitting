@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LinearProgressIndicator
@@ -58,6 +59,7 @@ internal fun InProgressProjectCard(
     onFinishClick: (() -> Unit)? = null,
     onStepProgressChange: ((Step, Int) -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
+    onPatternRowStep: ((Step, Int) -> Unit)? = null,
 ) {
     val shape = MaterialTheme.shapes.medium
     val countable = steps.filter { it.progressTarget() != null }
@@ -128,6 +130,7 @@ internal fun InProgressProjectCard(
                         step = current,
                         onProgressChange = onStepProgressChange,
                         onPatternCellsChange = onPatternCellsChange,
+                        onPatternRowStep = onPatternRowStep,
                         modifier = Modifier.padding(top = Spacing.md),
                     )
                 }
@@ -163,6 +166,7 @@ private fun CurrentStepPanel(
     step: Step?,
     onProgressChange: ((Step, Int) -> Unit)?,
     onPatternCellsChange: ((Step, String) -> Unit)?,
+    onPatternRowStep: ((Step, Int) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -217,10 +221,47 @@ private fun CurrentStepPanel(
                         storedCells = step.patternCells,
                         onCellsChange = { onPatternCellsChange?.invoke(step, it) },
                         editable = false,
+                        completedRows = step.patternRow,
                         modifier = Modifier.padding(top = Spacing.sm),
                     )
                 }
             }
+            if (step.type == StepType.Pattern && rows != null && target != null && onPatternRowStep != null) {
+                PatternRowCounter(step, rows, target, onPatternRowStep)
+            }
+        }
+    }
+}
+
+/** Counts the rows knitted within the current repeat of a pattern; the last row completes the repeat. */
+@Composable
+private fun PatternRowCounter(
+    step: Step,
+    rows: Int,
+    repeats: Int,
+    onRowStep: (Step, Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(R.string.pattern_row_progress, step.patternRow, rows),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f),
+        )
+        FilledTonalButton(
+            onClick = { onRowStep(step, -1) },
+            enabled = step.progress > 0 || step.patternRow > 0,
+        ) {
+            Text(stringResource(R.string.remove_count, 1))
+        }
+        FilledTonalButton(
+            onClick = { onRowStep(step, 1) },
+            enabled = step.progress < repeats,
+            modifier = Modifier.padding(start = Spacing.sm),
+        ) {
+            Text(stringResource(R.string.add_count, 1))
         }
     }
 }

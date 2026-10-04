@@ -97,6 +97,7 @@
         <item quantity="one">%1$d increase</item>
         <item quantity="other">%1$d increases</item>
     </plurals>
+    <string name="pattern_row_progress">%1$d / %2$d rows</string>
     <string name="add_count">+%1$d</string>
     <string name="remove_count">−%1$d</string>
     <plurals name="stitches_count">
