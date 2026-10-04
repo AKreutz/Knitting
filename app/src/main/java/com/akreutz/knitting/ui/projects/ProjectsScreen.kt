@@ -40,6 +40,7 @@ import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.ProjectStatus
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.annotation.StringRes
@@ -237,10 +238,26 @@ private fun StatusChip(
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = modifier) {
+        // Created stays outlined; the later statuses are filled so progress reads at a glance.
+        val colors = when (status) {
+            ProjectStatus.Created -> AssistChipDefaults.assistChipColors()
+            ProjectStatus.InProgress -> AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                labelColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                trailingIconContentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+            ProjectStatus.Finished -> AssistChipDefaults.assistChipColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                labelColor = MaterialTheme.colorScheme.onPrimary,
+                trailingIconContentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
         AssistChip(
             onClick = { expanded = true },
             label = { Text(stringResource(status.labelRes())) },
             trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
+            colors = colors,
+            border = if (status == ProjectStatus.Created) AssistChipDefaults.assistChipBorder(enabled = true) else null,
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             ProjectStatus.entries.forEach { option ->
