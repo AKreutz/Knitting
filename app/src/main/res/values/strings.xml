@@ -10,12 +10,13 @@
     <string name="status_created">Created</string>
     <string name="status_in_progress">In progress</string>
     <string name="status_finished">Finished</string>
-    <string name="in_progress_empty">No projects in progress. Tap a project to start it.</string>
+    <string name="in_progress_empty">No projects in progress.</string>
     <string name="started_at">Started %1$s</string>
     <string name="completed_at">Completed %1$s</string>
     <string name="start_project_title">Start project?</string>
     <string name="start_project_message">Start \"%1$s\"? Its status will change to In progress.</string>
     <string name="start">Start</string>
+    <string name="start_project_action">Start project</string>
     <string name="reset_project_title">Reset project?</string>
     <string name="reset_project_message">Reset \"%1$s\"? Its status will change back to Created and its step progress will be cleared.</string>
     <string name="reset">Reset</string>

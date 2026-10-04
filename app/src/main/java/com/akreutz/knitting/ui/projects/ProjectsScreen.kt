@@ -28,6 +28,8 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
@@ -47,7 +49,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -85,7 +86,7 @@ fun ProjectsScreen(
         projects = projects,
         stepsByProject = stepsByProject,
         onAddClick = { showAddDialog = true },
-        onProjectClick = { projectToStartId = it.id },
+        onProjectStartClick = { projectToStartId = it.id },
         onProjectEditClick = { projectToEditId = it.id },
         onPatternCellsChange = viewModel::setPatternCells,
         modifier = modifier,
@@ -148,7 +149,7 @@ private fun ProjectsContent(
     projects: List<Project>,
     stepsByProject: Map<Long, List<Step>>,
     onAddClick: () -> Unit,
-    onProjectClick: (Project) -> Unit,
+    onProjectStartClick: (Project) -> Unit,
     onProjectEditClick: (Project) -> Unit,
     onPatternCellsChange: (Step, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -182,11 +183,7 @@ private fun ProjectsContent(
                         steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
                         onPatternCellsChange = onPatternCellsChange,
-                        onClick = if (project.status == ProjectStatus.Created) {
-                            { onProjectClick(project) }
-                        } else {
-                            null
-                        },
+                        onStartClick = { onProjectStartClick(project) },
                         onEditClick = { onProjectEditClick(project) },
                     )
                 }
@@ -197,6 +194,8 @@ private fun ProjectsContent(
             expanded = fabExpanded,
             icon = { Icon(Icons.Filled.Add, contentDescription = null) },
             text = { Text(stringResource(R.string.new_project)) },
+            containerColor = MaterialTheme.colorScheme.secondary,
+            contentColor = MaterialTheme.colorScheme.onSecondary,
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(Spacing.lg),
@@ -209,18 +208,12 @@ internal fun ProjectCard(
     project: Project,
     modifier: Modifier = Modifier,
     steps: List<Step> = emptyList(),
-    onClick: (() -> Unit)? = null,
+    onStartClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
     onStepProgressChange: ((Step, Int) -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
 ) {
-    val shape = MaterialTheme.shapes.medium
-    val clickModifier = if (onClick != null) {
-        Modifier.clip(shape).clickable(onClick = onClick)
-    } else {
-        Modifier
-    }
-    Card(modifier = modifier.fillMaxWidth().then(clickModifier), shape = shape) {
+    Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
             // The strip's color mirrors the status chip so a card's progress reads at a glance.
             Box(
@@ -236,8 +229,7 @@ internal fun ProjectCard(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
-                    StatusChip(status = project.status, modifier = Modifier.padding(end = Spacing.xs))
-                    if (onEditClick != null) {
+                    if (onEditClick != null && project.status == ProjectStatus.Created) {
                         IconButton(onClick = onEditClick) {
                             Icon(
                                 Icons.Filled.Edit,
@@ -246,6 +238,7 @@ internal fun ProjectCard(
                             )
                         }
                     }
+                    StatusChip(status = project.status)
                 }
                 project.description?.let {
                     Text(
@@ -297,6 +290,18 @@ internal fun ProjectCard(
                                 )
                             }
                         }
+                    }
+                }
+                if (onStartClick != null && project.status == ProjectStatus.Created) {
+                    Button(
+                        onClick = onStartClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary,
+                            contentColor = MaterialTheme.colorScheme.onSecondary,
+                        ),
+                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
+                    ) {
+                        Text(stringResource(R.string.start_project_action))
                     }
                 }
             }
@@ -384,7 +389,7 @@ private fun ProjectsContentPreview() {
             ),
             stepsByProject = mapOf(1L to listOf(Step(1L, 1L, "Edge", StepType.CastOn, stitchCount = 60, method = "Long-tail", needleSize = "4.0 mm"))),
             onAddClick = {},
-            onProjectClick = {},
+            onProjectStartClick = {},
             onProjectEditClick = {},
             onPatternCellsChange = { _, _ -> },
         )
