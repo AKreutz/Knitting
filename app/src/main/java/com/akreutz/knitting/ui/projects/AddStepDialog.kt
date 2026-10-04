@@ -27,12 +27,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.PatternType
 import com.akreutz.knitting.data.RowPattern
+import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.ui.theme.KnittingTheme
 
@@ -52,6 +54,23 @@ data class NewStep(
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
     val patternRepeats: Int? = null,
+)
+
+internal fun Step.toNewStep() = NewStep(
+    name = name,
+    type = type,
+    color = color,
+    targetRows = targetRows,
+    stitchCount = stitchCount,
+    method = method,
+    needleSize = needleSize,
+    shapingCount = shapingCount,
+    pattern = pattern,
+    patternType = patternType,
+    rowPattern = rowPattern,
+    patternRows = patternRows,
+    patternColumns = patternColumns,
+    patternRepeats = patternRepeats,
 )
 
 /** Largest pattern grid the user can create, so cells stay tappable. */
@@ -85,22 +104,26 @@ fun AddStepDialog(
     stepNumber: Int,
     onDismiss: () -> Unit,
     onConfirm: (NewStep) -> Unit,
+    /** Set to edit an existing step: the form starts with its values. */
+    initial: NewStep? = null,
+    @StringRes titleRes: Int = R.string.add_step_title,
+    @StringRes confirmRes: Int = R.string.add,
 ) {
     val defaultName = stringResource(R.string.step_default_name, stepNumber)
-    var name by rememberSaveable { mutableStateOf(defaultName) }
-    var type by rememberSaveable { mutableStateOf(StepType.PlainRows) }
-    var color by rememberSaveable { mutableStateOf("") }
-    var targetRows by rememberSaveable { mutableStateOf("") }
-    var stitchCount by rememberSaveable { mutableStateOf("") }
-    var method by rememberSaveable { mutableStateOf("") }
-    var needleSize by rememberSaveable { mutableStateOf("") }
-    var shapingCount by rememberSaveable { mutableStateOf("") }
-    var pattern by rememberSaveable { mutableStateOf("") }
-    var patternType by rememberSaveable { mutableStateOf(PatternType.Cables) }
-    var rowPattern by rememberSaveable { mutableStateOf(RowPattern.AllKnit) }
-    var gridRows by rememberSaveable { mutableStateOf("") }
-    var gridColumns by rememberSaveable { mutableStateOf("") }
-    var patternRepeats by rememberSaveable { mutableStateOf("1") }
+    var name by rememberSaveable { mutableStateOf(initial?.name ?: defaultName) }
+    var type by rememberSaveable { mutableStateOf(initial?.type ?: StepType.PlainRows) }
+    var color by rememberSaveable { mutableStateOf(initial?.color.orEmpty()) }
+    var targetRows by rememberSaveable { mutableStateOf(initial?.targetRows?.toString().orEmpty()) }
+    var stitchCount by rememberSaveable { mutableStateOf(initial?.stitchCount?.toString().orEmpty()) }
+    var method by rememberSaveable { mutableStateOf(initial?.method.orEmpty()) }
+    var needleSize by rememberSaveable { mutableStateOf(initial?.needleSize.orEmpty()) }
+    var shapingCount by rememberSaveable { mutableStateOf(initial?.shapingCount?.toString().orEmpty()) }
+    var pattern by rememberSaveable { mutableStateOf(initial?.pattern.orEmpty()) }
+    var patternType by rememberSaveable { mutableStateOf(initial?.patternType ?: PatternType.Cables) }
+    var rowPattern by rememberSaveable { mutableStateOf(initial?.rowPattern ?: RowPattern.AllKnit) }
+    var gridRows by rememberSaveable { mutableStateOf(initial?.patternRows?.toString().orEmpty()) }
+    var gridColumns by rememberSaveable { mutableStateOf(initial?.patternColumns?.toString().orEmpty()) }
+    var patternRepeats by rememberSaveable { mutableStateOf(initial?.patternRepeats?.toString() ?: "1") }
 
     val rows = targetRows.toIntOrNull()
     val repeats = patternRepeats.toIntOrNull()
@@ -153,10 +176,11 @@ fun AddStepDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.add_step_title)) },
+        title = { Text(stringResource(titleRes)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.step_name)) },
@@ -174,6 +198,7 @@ fun AddStepDialog(
                         .padding(top = 12.dp),
                 )
                 OutlinedTextField(
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                     value = color,
                     onValueChange = { color = it },
                     label = { Text(stringResource(R.string.step_color_optional)) },
@@ -237,6 +262,7 @@ fun AddStepDialog(
                         labelRes = if (increases) R.string.step_increase_count else R.string.step_decrease_count,
                     )
                     OutlinedTextField(
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                         value = pattern,
                         onValueChange = { pattern = it },
                         label = {
@@ -262,6 +288,7 @@ fun AddStepDialog(
                         labelRes = R.string.step_stitch_count,
                     )
                     OutlinedTextField(
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                         value = method,
                         onValueChange = { method = it },
                         label = { Text(stringResource(R.string.step_method_optional)) },
@@ -271,6 +298,7 @@ fun AddStepDialog(
                             .padding(top = 12.dp),
                     )
                     OutlinedTextField(
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                         value = needleSize,
                         onValueChange = { needleSize = it },
                         label = { Text(stringResource(R.string.step_needle_size_optional)) },
@@ -312,7 +340,7 @@ fun AddStepDialog(
                 onClick = { newStep?.let(onConfirm) },
                 enabled = name.isNotBlank() && newStep != null,
             ) {
-                Text(stringResource(R.string.add))
+                Text(stringResource(confirmRes))
             }
         },
         dismissButton = {

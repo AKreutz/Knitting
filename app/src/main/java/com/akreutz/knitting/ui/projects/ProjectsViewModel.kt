@@ -93,12 +93,28 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         description: String,
         addedSteps: List<NewStep> = emptyList(),
         removedSteps: List<Step> = emptyList(),
+        editedSteps: List<Pair<Step, NewStep>> = emptyList(),
     ) {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return
         viewModelScope.launch {
             dao.updateDetails(project.id, trimmedName, description.trim().ifEmpty { null })
             removedSteps.forEach { dao.deleteStep(it) }
+            editedSteps.forEach { (old, new) ->
+                // The painted cells only stay valid while the grid keeps its type and size.
+                val sameGrid = old.type == StepType.Pattern && new.type == StepType.Pattern &&
+                    old.patternType == new.patternType &&
+                    old.patternRows == new.patternRows &&
+                    old.patternColumns == new.patternColumns
+                dao.updateStep(
+                    new.toStep(project.id).copy(
+                        id = old.id,
+                        patternCells = old.patternCells.takeIf { sameGrid },
+                        progress = old.progress,
+                        patternRow = old.patternRow,
+                    ),
+                )
+            }
             addedSteps.forEach { dao.insertStep(it.toStep(project.id)) }
         }
     }

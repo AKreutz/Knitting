@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -19,6 +20,9 @@ interface ProjectDao {
 
     @Insert
     suspend fun insertStep(step: Step): Long
+
+    @Update
+    suspend fun updateStep(step: Step)
 
     @Delete
     suspend fun deleteStep(step: Step)

@@ -126,8 +126,8 @@ fun ProjectsScreen(
                 projectToDeleteId = projectToEdit.id
                 projectToEditId = null
             },
-            onConfirm = { name, description, addedSteps, removedSteps ->
-                viewModel.editProject(projectToEdit, name, description, addedSteps, removedSteps)
+            onConfirm = { name, description, addedSteps, removedSteps, editedSteps ->
+                viewModel.editProject(projectToEdit, name, description, addedSteps, removedSteps, editedSteps)
                 projectToEditId = null
             },
         )
@@ -136,7 +136,7 @@ fun ProjectsScreen(
     if (showAddDialog) {
         AddProjectDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { name, description, addedSteps, _ ->
+            onConfirm = { name, description, addedSteps, _, _ ->
                 viewModel.addProject(name, description, addedSteps)
                 showAddDialog = false
             },
