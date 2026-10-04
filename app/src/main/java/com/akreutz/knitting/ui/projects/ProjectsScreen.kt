@@ -14,6 +14,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -55,12 +58,15 @@ fun ProjectsScreen(
     val projectToStart = projects.firstOrNull { it.id == projectToStartId }
     var projectToDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToDelete = projects.firstOrNull { it.id == projectToDeleteId }
+    var projectToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val projectToEdit = projects.firstOrNull { it.id == projectToEditId }
 
     ProjectsContent(
         projects = projects,
         onAddClick = { showAddDialog = true },
         onProjectClick = { projectToStartId = it.id },
         onProjectLongClick = { projectToDeleteId = it.id },
+        onProjectEditClick = { projectToEditId = it.id },
         onStatusChange = viewModel::setStatus,
         modifier = modifier,
     )
@@ -87,6 +93,20 @@ fun ProjectsScreen(
         )
     }
 
+    if (projectToEdit != null) {
+        AddProjectDialog(
+            initialName = projectToEdit.name,
+            initialDescription = projectToEdit.description.orEmpty(),
+            titleRes = R.string.edit_project_title,
+            confirmRes = R.string.save,
+            onDismiss = { projectToEditId = null },
+            onConfirm = { name, description ->
+                viewModel.editProject(projectToEdit, name, description)
+                projectToEditId = null
+            },
+        )
+    }
+
     if (showAddDialog) {
         AddProjectDialog(
             onDismiss = { showAddDialog = false },
@@ -104,6 +124,7 @@ private fun ProjectsContent(
     onAddClick: () -> Unit,
     onProjectClick: (Project) -> Unit,
     onProjectLongClick: (Project) -> Unit,
+    onProjectEditClick: (Project) -> Unit,
     onStatusChange: (Project, ProjectStatus) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -131,6 +152,7 @@ private fun ProjectsContent(
                             null
                         },
                         onLongClick = { onProjectLongClick(project) },
+                        onEditClick = { onProjectEditClick(project) },
                     )
                 }
             }
@@ -153,10 +175,22 @@ internal fun ProjectCard(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
+    onEditClick: (() -> Unit)? = null,
 ) {
     val content: @Composable ColumnScope.() -> Unit = {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = project.name, style = MaterialTheme.typography.titleMedium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = project.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onEditClick != null) {
+                    IconButton(onClick = onEditClick) {
+                        Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.edit_project_title))
+                    }
+                }
+            }
             project.description?.let {
                 Text(
                     text = it,
@@ -241,6 +275,7 @@ private fun ProjectsContentPreview() {
             onAddClick = {},
             onProjectClick = {},
             onProjectLongClick = {},
+            onProjectEditClick = {},
             onStatusChange = { _, _ -> },
         )
     }

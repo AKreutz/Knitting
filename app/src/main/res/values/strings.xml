@@ -22,6 +22,8 @@
     <string name="delete_project_title">Delete project?</string>
     <string name="delete_project_message">Delete \"%1$s\"? This can\'t be undone.</string>
     <string name="delete">Delete</string>
+    <string name="edit_project_title">Edit project</string>
+    <string name="save">Save</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
 </resources>

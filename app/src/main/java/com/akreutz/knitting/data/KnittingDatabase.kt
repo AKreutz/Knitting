@@ -1,7 +1,6 @@
 package com.akreutz.knitting.data
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -15,11 +14,9 @@ abstract class KnittingDatabase : RoomDatabase() {
         @Volatile
         private var instance: KnittingDatabase? = null
 
-        /** Inserts a sample project when the database is created, in debuggable builds only. */
-        private fun seedCallback(context: Context) = object : Callback() {
+        /** Inserts a sample project whenever the database is created, in every build type. */
+        private fun seedCallback() = object : Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
-                val debuggable = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-                if (!debuggable) return
                 db.execSQL(
                     "INSERT INTO projects (name, description, status) " +
                         "VALUES ('Sample scarf', 'Seed project for development', 'Created')",
@@ -36,7 +33,7 @@ abstract class KnittingDatabase : RoomDatabase() {
                 )
                     // Schema changes wipe the data instead of migrating it.
                     .fallbackToDestructiveMigration(dropAllTables = true)
-                    .addCallback(seedCallback(context))
+                    .addCallback(seedCallback())
                     .build()
                     .also { instance = it }
             }

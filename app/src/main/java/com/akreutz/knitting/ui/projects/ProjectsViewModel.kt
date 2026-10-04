@@ -34,6 +34,14 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { dao.delete(project) }
     }
 
+    fun editProject(project: Project, name: String, description: String) {
+        val trimmedName = name.trim()
+        if (trimmedName.isEmpty()) return
+        viewModelScope.launch {
+            dao.updateDetails(project.id, trimmedName, description.trim().ifEmpty { null })
+        }
+    }
+
     fun addProject(name: String, description: String) {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return

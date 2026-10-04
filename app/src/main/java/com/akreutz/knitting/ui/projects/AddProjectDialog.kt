@@ -1,5 +1,6 @@
 package com.akreutz.knitting.ui.projects
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,13 +24,17 @@ import com.akreutz.knitting.ui.theme.KnittingTheme
 fun AddProjectDialog(
     onDismiss: () -> Unit,
     onConfirm: (name: String, description: String) -> Unit,
+    initialName: String = "",
+    initialDescription: String = "",
+    @StringRes titleRes: Int = R.string.add_project_title,
+    @StringRes confirmRes: Int = R.string.add,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var description by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    var description by rememberSaveable { mutableStateOf(initialDescription) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.add_project_title)) },
+        title = { Text(stringResource(titleRes)) },
         text = {
             Column {
                 OutlinedTextField(
@@ -55,7 +60,7 @@ fun AddProjectDialog(
                 onClick = { onConfirm(name, description) },
                 enabled = name.isNotBlank(),
             ) {
-                Text(stringResource(R.string.add))
+                Text(stringResource(confirmRes))
             }
         },
         dismissButton = {

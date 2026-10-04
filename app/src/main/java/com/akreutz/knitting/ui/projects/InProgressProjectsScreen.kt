@@ -32,6 +32,23 @@ fun InProgressProjectsScreen(
     var projectToResetId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToReset = inProgress.firstOrNull { it.id == projectToResetId }
 
+    var projectToEditId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val projectToEdit = inProgress.firstOrNull { it.id == projectToEditId }
+
+    if (projectToEdit != null) {
+        AddProjectDialog(
+            initialName = projectToEdit.name,
+            initialDescription = projectToEdit.description.orEmpty(),
+            titleRes = R.string.edit_project_title,
+            confirmRes = R.string.save,
+            onDismiss = { projectToEditId = null },
+            onConfirm = { name, description ->
+                viewModel.editProject(projectToEdit, name, description)
+                projectToEditId = null
+            },
+        )
+    }
+
     if (projectToReset != null) {
         ResetProjectDialog(
             projectName = projectToReset.name,
@@ -61,6 +78,7 @@ fun InProgressProjectsScreen(
                         project = project,
                         onStatusChange = { viewModel.setStatus(project, it) },
                         onLongClick = { projectToResetId = project.id },
+                        onEditClick = { projectToEditId = project.id },
                     )
                 }
             }
