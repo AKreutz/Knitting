@@ -2,7 +2,6 @@
     <string name="app_name">Knitting</string>
     <string name="nav_projects">Projects</string>
     <string name="nav_in_progress">In progress</string>
-    <string name="nav_settings">Settings</string>
     <string name="projects_empty">No projects yet. Tap + to add one.</string>
     <string name="add_project_title">Add project</string>
     <string name="project_name">Name</string>
