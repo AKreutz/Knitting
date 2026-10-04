@@ -26,4 +26,12 @@
     <string name="save">Save</string>
     <string name="add">Add</string>
     <string name="cancel">Cancel</string>
+    <string name="new_project">New project</string>
+    <string name="day_count">Day %1$d</string>
+    <string name="add_row">Add row</string>
+    <string name="remove_row">Remove row</string>
+    <plurals name="rows_count">
+        <item quantity="one">%1$d row</item>
+        <item quantity="other">%1$d rows</item>
+    </plurals>
 </resources>

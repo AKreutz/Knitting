@@ -17,10 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.ProjectStatus
+import com.akreutz.knitting.ui.theme.Spacing
 
 @Composable
 fun InProgressProjectsScreen(
@@ -70,13 +70,14 @@ fun InProgressProjectsScreen(
             )
         } else {
             LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(Spacing.lg),
+                verticalArrangement = Arrangement.spacedBy(Spacing.md),
             ) {
                 items(inProgress, key = { it.id }) { project ->
                     ProjectCard(
                         project = project,
-                        onStatusChange = { viewModel.setStatus(project, it) },
+                        modifier = Modifier.animateItem(),
+                        onRowCountChange = { viewModel.setRowCount(project, it) },
                         onLongClick = { projectToResetId = project.id },
                         onEditClick = { projectToEditId = project.id },
                     )

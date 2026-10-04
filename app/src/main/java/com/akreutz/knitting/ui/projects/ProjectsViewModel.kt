@@ -30,6 +30,10 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { dao.updateStatus(project.id, status, startedAt, completedAt) }
     }
 
+    fun setRowCount(project: Project, rowCount: Int) {
+        viewModelScope.launch { dao.updateRowCount(project.id, rowCount.coerceAtLeast(0)) }
+    }
+
     fun deleteProject(project: Project) {
         viewModelScope.launch { dao.delete(project) }
     }

@@ -24,4 +24,7 @@ interface ProjectDao {
         "UPDATE projects SET status = :status, startedAt = :startedAt, completedAt = :completedAt WHERE id = :id",
     )
     suspend fun updateStatus(id: Long, status: ProjectStatus, startedAt: Long?, completedAt: Long?)
+
+    @Query("UPDATE projects SET rowCount = :rowCount WHERE id = :id")
+    suspend fun updateRowCount(id: Long, rowCount: Int)
 }
