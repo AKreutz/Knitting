@@ -14,3 +14,9 @@
 .cxx
 local.properties
 /.idea/
+
+# Release signing
+keystore.properties
+*.jks
+*.keystore
+/.kotlin/
