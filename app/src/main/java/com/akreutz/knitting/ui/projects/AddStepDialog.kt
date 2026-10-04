@@ -32,6 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.PatternType
+import com.akreutz.knitting.data.RowPattern
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.ui.theme.KnittingTheme
 
@@ -46,8 +47,10 @@ data class NewStep(
     val shapingCount: Int? = null,
     val pattern: String? = null,
     val patternType: PatternType? = null,
+    val rowPattern: RowPattern? = null,
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
+    val patternRepeats: Int? = null,
 )
 
 /** Largest pattern grid the user can create, so cells stay tappable. */
@@ -60,32 +63,45 @@ internal fun PatternType.labelRes(): Int = when (this) {
 }
 
 @StringRes
+internal fun RowPattern.labelRes(): Int = when (this) {
+    RowPattern.AllKnit -> R.string.row_pattern_all_knit
+    RowPattern.AllPurl -> R.string.row_pattern_all_purl
+    RowPattern.Ribbing1x1 -> R.string.row_pattern_ribbing_1x1
+    RowPattern.Ribbing2x2 -> R.string.row_pattern_ribbing_2x2
+}
+
+@StringRes
 internal fun StepType.labelRes(): Int = when (this) {
     StepType.CastOn -> R.string.step_type_cast_on
     StepType.Increases -> R.string.step_type_increases
     StepType.Decreases -> R.string.step_type_decreases
-    StepType.Stockinette -> R.string.step_type_stockinette
+    StepType.PlainRows -> R.string.step_type_plain_rows
     StepType.Pattern -> R.string.step_type_pattern
 }
 
 @Composable
 fun AddStepDialog(
+    stepNumber: Int,
     onDismiss: () -> Unit,
     onConfirm: (NewStep) -> Unit,
 ) {
-    var name by rememberSaveable { mutableStateOf("") }
-    var type by rememberSaveable { mutableStateOf(StepType.Stockinette) }
+    val defaultName = stringResource(R.string.step_default_name, stepNumber)
+    var name by rememberSaveable { mutableStateOf(defaultName) }
+    var type by rememberSaveable { mutableStateOf(StepType.PlainRows) }
     var targetRows by rememberSaveable { mutableStateOf("") }
     var stitchCount by rememberSaveable { mutableStateOf("") }
     var method by rememberSaveable { mutableStateOf("") }
     var needleSize by rememberSaveable { mutableStateOf("") }
     var shapingCount by rememberSaveable { mutableStateOf("") }
     var pattern by rememberSaveable { mutableStateOf("") }
-    var patternType by rememberSaveable { mutableStateOf(PatternType.Colorwork) }
+    var patternType by rememberSaveable { mutableStateOf(PatternType.Cables) }
+    var rowPattern by rememberSaveable { mutableStateOf(RowPattern.AllKnit) }
     var gridRows by rememberSaveable { mutableStateOf("") }
     var gridColumns by rememberSaveable { mutableStateOf("") }
+    var patternRepeats by rememberSaveable { mutableStateOf("1") }
 
     val rows = targetRows.toIntOrNull()
+    val repeats = patternRepeats.toIntOrNull()
     val stitches = stitchCount.toIntOrNull()
     val shaping = shapingCount.toIntOrNull()
     val gridSize = MAX_PATTERN_SIZE.let { max ->
@@ -95,7 +111,16 @@ fun AddStepDialog(
     }
     val newStep = when (type) {
         StepType.Pattern -> gridSize?.let { (r, c) ->
-            NewStep(name = name, type = type, patternType = patternType, patternRows = r, patternColumns = c)
+            repeats?.takeIf { it > 0 }?.let {
+                NewStep(
+                    name = name,
+                    type = type,
+                    patternType = patternType,
+                    patternRows = r,
+                    patternColumns = c,
+                    patternRepeats = it,
+                )
+            }
         }
         StepType.Increases, StepType.Decreases -> shaping?.takeIf { it > 0 }?.let {
             NewStep(
@@ -114,7 +139,14 @@ fun AddStepDialog(
                 needleSize = needleSize.trim().ifEmpty { null },
             )
         }
-        else -> rows?.takeIf { it > 0 }?.let { NewStep(name = name, type = type, targetRows = it) }
+        else -> rows?.takeIf { it > 0 }?.let {
+            NewStep(
+                name = name,
+                type = type,
+                targetRows = it,
+                rowPattern = rowPattern.takeIf { type == StepType.PlainRows },
+            )
+        }
     }
 
     AlertDialog(
@@ -181,6 +213,11 @@ fun AddStepDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
                     )
+                    NumberField(
+                        value = patternRepeats,
+                        onValueChange = { patternRepeats = it },
+                        labelRes = R.string.step_pattern_repeats,
+                    )
                 } else if (type == StepType.Increases || type == StepType.Decreases) {
                     val increases = type == StepType.Increases
                     NumberField(
@@ -232,11 +269,30 @@ fun AddStepDialog(
                             .padding(top = 12.dp),
                     )
                 } else {
-                    NumberField(
-                        value = targetRows,
-                        onValueChange = { targetRows = it },
-                        labelRes = R.string.step_target_rows,
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    ) {
+                        if (type == StepType.PlainRows) {
+                            EnumDropdown(
+                                labelRes = R.string.step_row_pattern,
+                                selected = rowPattern,
+                                options = RowPattern.entries,
+                                optionLabelRes = RowPattern::labelRes,
+                                onSelect = { rowPattern = it },
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp),
+                            )
+                        }
+                        NumberField(
+                            value = targetRows,
+                            onValueChange = { targetRows = it },
+                            labelRes = R.string.step_target_rows,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
         },
@@ -320,6 +376,6 @@ private fun NumberField(
 @Composable
 private fun AddStepDialogPreview() {
     KnittingTheme {
-        AddStepDialog(onDismiss = {}, onConfirm = {})
+        AddStepDialog(stepNumber = 1, onDismiss = {}, onConfirm = {})
     }
 }

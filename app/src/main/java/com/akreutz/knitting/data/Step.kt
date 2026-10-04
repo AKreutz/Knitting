@@ -40,12 +40,16 @@ data class Step(
     /** Pattern: grid size. */
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
+    /** Pattern: how many repeats of the pattern need to be knitted. */
+    val patternRepeats: Int? = null,
     /**
      * Pattern: one character per cell, row by row, holding the index of the painted color
      * (see PatternPalette; '0' is empty). Null until the user paints something.
      */
     val patternCells: String? = null,
-    /** Cast-on stitches, increases, decreases or stockinette rows done so far, tracked while in progress. */
+    /** Plain rows: the stitch sequence worked. */
+    val rowPattern: RowPattern? = null,
+    /** Cast-on stitches, increases, decreases, plain rows or pattern repeats done so far, tracked while in progress. */
     val progress: Int = 0,
 )
 
@@ -53,6 +57,6 @@ data class Step(
 fun Step.progressTarget(): Int? = when (type) {
     StepType.CastOn -> stitchCount
     StepType.Increases, StepType.Decreases -> shapingCount
-    StepType.Stockinette -> targetRows
-    else -> null
+    StepType.PlainRows -> targetRows
+    StepType.Pattern -> patternRepeats
 }

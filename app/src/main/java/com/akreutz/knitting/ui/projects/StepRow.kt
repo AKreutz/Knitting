@@ -86,13 +86,14 @@ internal fun StepRow(
                     StepCounter(step, onProgressChange, modifier = Modifier.padding(top = Spacing.xs))
                 }
                 if (hasGrid && rows != null && columns != null) {
-                    // The grid can be painted both while planning the project and while knitting it.
+                    // The grid is painted while planning the project; once it is in progress it is only shown.
                     PatternGrid(
                         rows = rows,
                         columns = columns,
                         patternType = step.patternType,
                         storedCells = step.patternCells,
                         onCellsChange = { onPatternCellsChange?.invoke(step, it) },
+                        editable = !inProgress,
                         modifier = Modifier.padding(top = Spacing.sm),
                     )
                 }
@@ -107,8 +108,8 @@ internal fun Step.unitRes(): Int? = when (type) {
     StepType.CastOn -> R.plurals.stitches_count
     StepType.Increases -> R.plurals.increases_count
     StepType.Decreases -> R.plurals.decreases_count
-    StepType.Stockinette -> R.plurals.rows_count
-    else -> null
+    StepType.PlainRows -> R.plurals.rows_count
+    StepType.Pattern -> R.plurals.pattern_repeats_count
 }
 
 /** How much a tap on a step's counter adds or removes. */
@@ -134,9 +135,13 @@ private fun headerText(step: Step, showProgress: Boolean): String {
         listOfNotNull(
             step.patternType?.let { stringResource(it.labelRes()) },
             stringResource(R.string.pattern_size, step.patternRows ?: 0, step.patternColumns ?: 0),
+            step.patternRepeats?.let { pluralStringResource(R.plurals.pattern_repeats_count, it, it) },
         ).joinToString(" · ")
     } else {
-        (target ?: step.targetRows)?.let { pluralStringResource(unit ?: R.plurals.rows_count, it, it) }
+        listOfNotNull(
+            step.rowPattern?.let { stringResource(it.labelRes()) },
+            (target ?: step.targetRows)?.let { pluralStringResource(unit ?: R.plurals.rows_count, it, it) },
+        ).joinToString(" · ").ifEmpty { null }
     }
     return listOfNotNull(step.name, stringResource(step.type.labelRes()), detail).joinToString(" · ")
 }

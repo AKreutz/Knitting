@@ -40,8 +40,10 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
                     shapingCount = newStep.shapingCount,
                     pattern = newStep.pattern,
                     patternType = newStep.patternType,
+                    rowPattern = newStep.rowPattern,
                     patternRows = newStep.patternRows,
                     patternColumns = newStep.patternColumns,
+                    patternRepeats = newStep.patternRepeats,
                 ),
             )
         }

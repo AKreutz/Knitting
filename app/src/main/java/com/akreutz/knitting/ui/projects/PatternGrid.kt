@@ -242,7 +242,8 @@ private fun DrawScope.drawStitch(stitch: Int, topLeft: Offset, cellPx: Float, co
 
 /**
  * A rows × columns grid the user paints by tapping or dragging, with a palette underneath: colors
- * for colorwork patterns, stitch symbols for cables.
+ * for colorwork patterns, stitch symbols for cables. A grid that is not [editable] is only shown,
+ * without the palette and the Edit button.
  */
 @Composable
 internal fun PatternGrid(
@@ -252,6 +253,7 @@ internal fun PatternGrid(
     storedCells: String?,
     onCellsChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    editable: Boolean = true,
 ) {
     val cables = patternType == PatternType.Cables
     val size = rows * columns
@@ -528,7 +530,7 @@ internal fun PatternGrid(
                 }
             }
         }
-        Row(
+        if (editable) Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,

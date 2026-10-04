@@ -4,6 +4,6 @@ enum class StepType {
     CastOn,
     Increases,
     Decreases,
-    Stockinette,
+    PlainRows,
     Pattern,
 }

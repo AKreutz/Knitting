@@ -106,6 +106,7 @@ fun ProjectsScreen(
 
     if (projectToAddStep != null) {
         AddStepDialog(
+            stepNumber = (stepsByProject[projectToAddStep.id]?.size ?: 0) + 1,
             onDismiss = { projectToAddStepId = null },
             onConfirm = { newStep ->
                 viewModel.addStep(projectToAddStep, newStep)

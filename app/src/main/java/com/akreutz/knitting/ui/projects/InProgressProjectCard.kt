@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +30,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -217,14 +219,19 @@ private fun CurrentStepPanel(
             val rows = step.patternRows
             val columns = step.patternColumns
             if (step.type == StepType.Pattern && rows != null && columns != null) {
-                PatternGrid(
-                    rows = rows,
-                    columns = columns,
-                    patternType = step.patternType,
-                    storedCells = step.patternCells,
-                    onCellsChange = { onPatternCellsChange?.invoke(step, it) },
-                    modifier = Modifier.padding(top = Spacing.sm),
-                )
+                // The panel's content color is light on its colored background; the grid has its own
+                // light cells, so its symbols keep the card's regular text color.
+                CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onSurface) {
+                    PatternGrid(
+                        rows = rows,
+                        columns = columns,
+                        patternType = step.patternType,
+                        storedCells = step.patternCells,
+                        onCellsChange = { onPatternCellsChange?.invoke(step, it) },
+                        editable = false,
+                        modifier = Modifier.padding(top = Spacing.sm),
+                    )
+                }
             }
         }
     }
@@ -278,7 +285,8 @@ private fun Step.isDone(): Boolean = progressTarget()?.let { progress >= it } ?:
 
 /**
  * The step to work on next: the first counted step that is not finished, else the first pattern
- * step (patterns are reference material and never block progress), else null when all is done.
+ * step without a repeat count (it is reference material and never blocks progress), else null
+ * when all is done.
  */
 private fun List<Step>.currentStep(): Step? =
     firstOrNull { it.progressTarget() != null && !it.isDone() }
