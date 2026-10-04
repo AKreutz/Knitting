@@ -12,6 +12,18 @@
             "statusMessage": "Running lint before commit..."
           }
         ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "PowerShell(git commit *)",
+            "command": "./gradlew lint >&2 || exit 2",
+            "timeout": 600,
+            "statusMessage": "Running lint before commit..."
+          }
+        ]
       }
     ]
   },
