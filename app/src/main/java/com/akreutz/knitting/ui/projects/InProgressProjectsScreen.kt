@@ -28,6 +28,7 @@ fun InProgressProjectsScreen(
     viewModel: ProjectsViewModel = viewModel(),
 ) {
     val projects by viewModel.projects.collectAsState()
+    val stepsByProject by viewModel.stepsByProject.collectAsState()
     val inProgress = projects.filter { it.status == ProjectStatus.InProgress }
     var projectToResetId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToReset = inProgress.firstOrNull { it.id == projectToResetId }
@@ -76,8 +77,11 @@ fun InProgressProjectsScreen(
                 items(inProgress, key = { it.id }) { project ->
                     ProjectCard(
                         project = project,
+                        steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
                         onRowCountChange = { viewModel.setRowCount(project, it) },
+                        onStepProgressChange = viewModel::setStepProgress,
+                        onPatternCellsChange = viewModel::setPatternCells,
                         onLongClick = { projectToResetId = project.id },
                         onEditClick = { projectToEditId = project.id },
                     )

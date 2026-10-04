@@ -30,6 +30,47 @@
     <string name="day_count">Day %1$d</string>
     <string name="add_row">Add row</string>
     <string name="remove_row">Remove row</string>
+    <string name="add_step">Add step</string>
+    <string name="add_step_title">Add step</string>
+    <string name="step_target_rows">Target rows</string>
+    <string name="step_name">Step name</string>
+    <string name="step_type">Type</string>
+    <string name="step_type_cast_on">Cast-on</string>
+    <string name="step_type_increases">Increases</string>
+    <string name="step_type_decreases">Decreases</string>
+    <string name="step_type_stockinette">Stockinette</string>
+    <string name="step_type_pattern">Pattern</string>
+    <string name="step_stitch_count">Stitch count</string>
+    <string name="step_method_optional">Method (optional)</string>
+    <string name="step_needle_size_optional">Needle size (optional)</string>
+    <string name="step_increase_count">Number of increases</string>
+    <string name="step_increase_pattern_optional">Increase pattern (optional)</string>
+    <string name="step_decrease_count">Number of decreases</string>
+    <string name="step_decrease_pattern_optional">Decrease pattern (optional)</string>
+    <plurals name="decreases_count">
+        <item quantity="one">%1$d decrease</item>
+        <item quantity="other">%1$d decreases</item>
+    </plurals>
+    <string name="step_pattern_rows">Rows</string>
+    <string name="step_pattern_columns">Columns</string>
+    <string name="step_pattern_size_hint">Up to %1$d × %1$d</string>
+    <string name="pattern_size">%1$d × %2$d</string>
+    <string name="pattern_color">Color %1$d</string>
+    <string name="pattern_erase">Erase</string>
+    <string name="pattern_pan">Move grid</string>
+    <string name="pattern_save">Save</string>
+    <string name="pattern_edit">Edit</string>
+    <string name="step_progress">%1$d / %2$s</string>
+    <plurals name="increases_count">
+        <item quantity="one">%1$d increase</item>
+        <item quantity="other">%1$d increases</item>
+    </plurals>
+    <string name="add_count">+%1$d</string>
+    <string name="remove_count">−%1$d</string>
+    <plurals name="stitches_count">
+        <item quantity="one">%1$d stitch</item>
+        <item quantity="other">%1$d stitches</item>
+    </plurals>
     <plurals name="rows_count">
         <item quantity="one">%1$d row</item>
         <item quantity="other">%1$d rows</item>

@@ -11,8 +11,20 @@ interface ProjectDao {
     @Query("SELECT * FROM projects ORDER BY id DESC")
     fun observeAll(): Flow<List<Project>>
 
+    @Query("SELECT * FROM steps ORDER BY id")
+    fun observeAllSteps(): Flow<List<Step>>
+
     @Insert
     suspend fun insert(project: Project): Long
+
+    @Insert
+    suspend fun insertStep(step: Step): Long
+
+    @Query("UPDATE steps SET patternCells = :patternCells WHERE id = :id")
+    suspend fun updatePatternCells(id: Long, patternCells: String)
+
+    @Query("UPDATE steps SET progress = :progress WHERE id = :id")
+    suspend fun updateStepProgress(id: Long, progress: Int)
 
     @Delete
     suspend fun delete(project: Project)

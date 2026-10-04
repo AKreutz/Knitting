@@ -6,7 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Project::class], version = 5, exportSchema = false)
+@Database(entities = [Project::class, Step::class], version = 12, exportSchema = false)
 abstract class KnittingDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
 
@@ -16,10 +16,21 @@ abstract class KnittingDatabase : RoomDatabase() {
 
         /** Inserts a sample project whenever the database is created, in every build type. */
         private fun seedCallback() = object : Callback() {
+            private var seedOnOpen = false
+
             override fun onCreate(db: SupportSQLiteDatabase) = seed(db)
 
-            // A destructive migration recreates the tables without calling onCreate.
-            override fun onDestructiveMigration(db: SupportSQLiteDatabase) = seed(db)
+            // A destructive migration recreates the tables without calling onCreate, and this
+            // callback runs before they exist again, so the seed waits for onOpen.
+            override fun onDestructiveMigration(db: SupportSQLiteDatabase) {
+                seedOnOpen = true
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                if (!seedOnOpen) return
+                seedOnOpen = false
+                seed(db)
+            }
 
             private fun seed(db: SupportSQLiteDatabase) {
                 db.execSQL(

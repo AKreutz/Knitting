@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.akreutz.knitting.data.KnittingDatabase
 import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.ProjectStatus
+import com.akreutz.knitting.data.Step
+import com.akreutz.knitting.data.progressTarget
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -16,6 +19,41 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
 
     val projects: StateFlow<List<Project>> = dao.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val stepsByProject: StateFlow<Map<Long, List<Step>>> = dao.observeAllSteps()
+        .map { steps -> steps.groupBy { it.projectId } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    fun addStep(project: Project, newStep: NewStep) {
+        val trimmedName = newStep.name.trim()
+        if (trimmedName.isEmpty()) return
+        viewModelScope.launch {
+            dao.insertStep(
+                Step(
+                    projectId = project.id,
+                    name = trimmedName,
+                    type = newStep.type,
+                    targetRows = newStep.targetRows,
+                    stitchCount = newStep.stitchCount,
+                    method = newStep.method,
+                    needleSize = newStep.needleSize,
+                    shapingCount = newStep.shapingCount,
+                    pattern = newStep.pattern,
+                    patternRows = newStep.patternRows,
+                    patternColumns = newStep.patternColumns,
+                ),
+            )
+        }
+    }
+
+    fun setPatternCells(step: Step, cells: String) {
+        viewModelScope.launch { dao.updatePatternCells(step.id, cells) }
+    }
+
+    fun setStepProgress(step: Step, progress: Int) {
+        val max = step.progressTarget() ?: return
+        viewModelScope.launch { dao.updateStepProgress(step.id, progress.coerceIn(0, max)) }
+    }
 
     fun setStatus(project: Project, status: ProjectStatus) {
         // Starting stamps today's date once and finishing does the same for completedAt.

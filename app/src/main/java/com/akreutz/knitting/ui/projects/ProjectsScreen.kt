@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -32,6 +34,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -52,6 +55,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.ProjectStatus
+import com.akreutz.knitting.data.Step
+import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.ui.theme.KnittingTheme
 import com.akreutz.knitting.ui.theme.Spacing
 import java.text.DateFormat
@@ -64,6 +69,9 @@ fun ProjectsScreen(
     viewModel: ProjectsViewModel = viewModel(),
 ) {
     val projects by viewModel.projects.collectAsState()
+    val stepsByProject by viewModel.stepsByProject.collectAsState()
+    var projectToAddStepId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val projectToAddStep = projects.firstOrNull { it.id == projectToAddStepId }
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var projectToStartId by rememberSaveable { mutableStateOf<Long?>(null) }
     val projectToStart = projects.firstOrNull { it.id == projectToStartId }
@@ -74,12 +82,25 @@ fun ProjectsScreen(
 
     ProjectsContent(
         projects = projects,
+        stepsByProject = stepsByProject,
         onAddClick = { showAddDialog = true },
         onProjectClick = { projectToStartId = it.id },
         onProjectLongClick = { projectToDeleteId = it.id },
         onProjectEditClick = { projectToEditId = it.id },
+        onAddStepClick = { projectToAddStepId = it.id },
+        onPatternCellsChange = viewModel::setPatternCells,
         modifier = modifier,
     )
+
+    if (projectToAddStep != null) {
+        AddStepDialog(
+            onDismiss = { projectToAddStepId = null },
+            onConfirm = { newStep ->
+                viewModel.addStep(projectToAddStep, newStep)
+                projectToAddStepId = null
+            },
+        )
+    }
 
     if (projectToDelete != null) {
         DeleteProjectDialog(
@@ -131,10 +152,13 @@ fun ProjectsScreen(
 @Composable
 private fun ProjectsContent(
     projects: List<Project>,
+    stepsByProject: Map<Long, List<Step>>,
     onAddClick: () -> Unit,
     onProjectClick: (Project) -> Unit,
     onProjectLongClick: (Project) -> Unit,
     onProjectEditClick: (Project) -> Unit,
+    onAddStepClick: (Project) -> Unit,
+    onPatternCellsChange: (Step, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -163,7 +187,14 @@ private fun ProjectsContent(
                 items(projects, key = { it.id }) { project ->
                     ProjectCard(
                         project = project,
+                        steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
+                        onPatternCellsChange = onPatternCellsChange,
+                        onAddStepClick = if (project.status == ProjectStatus.Created) {
+                            { onAddStepClick(project) }
+                        } else {
+                            null
+                        },
                         onClick = if (project.status == ProjectStatus.Created) {
                             { onProjectClick(project) }
                         } else {
@@ -191,10 +222,14 @@ private fun ProjectsContent(
 internal fun ProjectCard(
     project: Project,
     modifier: Modifier = Modifier,
+    steps: List<Step> = emptyList(),
     onClick: (() -> Unit)? = null,
     onLongClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
+    onAddStepClick: (() -> Unit)? = null,
     onRowCountChange: ((Int) -> Unit)? = null,
+    onStepProgressChange: ((Step, Int) -> Unit)? = null,
+    onPatternCellsChange: ((Step, String) -> Unit)? = null,
 ) {
     val shape = MaterialTheme.shapes.medium
     // Card(onClick) has no long-click, so clip to the card shape and add the gestures ourselves.
@@ -241,6 +276,22 @@ internal fun ProjectCard(
                     )
                 }
                 DatesLine(project)
+                steps.forEach { step ->
+                    StepRow(
+                        step = step,
+                        inProgress = project.status == ProjectStatus.InProgress,
+                        onProgressChange = onStepProgressChange,
+                        onPatternCellsChange = onPatternCellsChange,
+                        modifier = Modifier.padding(top = Spacing.sm),
+                    )
+                }
+                if (onAddStepClick != null) {
+                    TextButton(onClick = onAddStepClick, modifier = Modifier.padding(top = Spacing.xs)) {
+                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(Spacing.xs))
+                        Text(stringResource(R.string.add_step))
+                    }
+                }
                 if (project.status == ProjectStatus.InProgress && onRowCountChange != null) {
                     RowCounter(
                         project = project,
@@ -362,10 +413,13 @@ private fun ProjectsContentPreview() {
                 Project(1L, "Winter scarf", "Merino wool, garter stitch"),
                 Project(2L, "Baby hat", null),
             ),
+            stepsByProject = mapOf(1L to listOf(Step(1L, 1L, "Edge", StepType.CastOn, stitchCount = 60, method = "Long-tail", needleSize = "4.0 mm"))),
             onAddClick = {},
             onProjectClick = {},
             onProjectLongClick = {},
             onProjectEditClick = {},
+            onAddStepClick = {},
+            onPatternCellsChange = { _, _ -> },
         )
     }
 }
