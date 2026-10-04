@@ -90,6 +90,7 @@ internal fun StepRow(
                     PatternGrid(
                         rows = rows,
                         columns = columns,
+                        patternType = step.patternType,
                         storedCells = step.patternCells,
                         onCellsChange = { onPatternCellsChange?.invoke(step, it) },
                         modifier = Modifier.padding(top = Spacing.sm),
@@ -130,7 +131,10 @@ private fun headerText(step: Step, showProgress: Boolean): String {
         return "${step.name} · $progress"
     }
     val detail = if (step.type == StepType.Pattern) {
-        stringResource(R.string.pattern_size, step.patternRows ?: 0, step.patternColumns ?: 0)
+        listOfNotNull(
+            step.patternType?.let { stringResource(it.labelRes()) },
+            stringResource(R.string.pattern_size, step.patternRows ?: 0, step.patternColumns ?: 0),
+        ).joinToString(" · ")
     } else {
         (target ?: step.targetRows)?.let { pluralStringResource(unit ?: R.plurals.rows_count, it, it) }
     }

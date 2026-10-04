@@ -53,12 +53,19 @@
         <item quantity="one">%1$d decrease</item>
         <item quantity="other">%1$d decreases</item>
     </plurals>
+    <string name="step_pattern_type">Pattern type</string>
+    <string name="pattern_type_cables">Cables</string>
+    <string name="pattern_type_colorwork">Colorwork</string>
     <string name="step_pattern_rows">Rows</string>
     <string name="step_pattern_columns">Columns</string>
     <string name="step_pattern_size_hint">Up to %1$d × %1$d</string>
     <string name="pattern_size">%1$d × %2$d</string>
     <string name="pattern_color">Color %1$d</string>
     <string name="pattern_erase">Erase</string>
+    <string name="stitch_knit">Knit</string>
+    <string name="stitch_purl">Purl</string>
+    <string name="stitch_cross_left">Cross left</string>
+    <string name="stitch_cross_right">Cross right</string>
     <string name="pattern_pan">Move grid</string>
     <string name="pattern_save">Save</string>
     <string name="pattern_edit">Edit</string>

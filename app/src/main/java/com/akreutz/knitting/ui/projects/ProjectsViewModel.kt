@@ -39,6 +39,7 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
                     needleSize = newStep.needleSize,
                     shapingCount = newStep.shapingCount,
                     pattern = newStep.pattern,
+                    patternType = newStep.patternType,
                     patternRows = newStep.patternRows,
                     patternColumns = newStep.patternColumns,
                 ),

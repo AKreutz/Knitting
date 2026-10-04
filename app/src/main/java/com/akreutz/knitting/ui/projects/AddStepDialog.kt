@@ -1,17 +1,19 @@
 package com.akreutz.knitting.ui.projects
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -19,14 +21,17 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
+import com.akreutz.knitting.data.PatternType
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.ui.theme.KnittingTheme
 
@@ -40,12 +45,19 @@ data class NewStep(
     val needleSize: String? = null,
     val shapingCount: Int? = null,
     val pattern: String? = null,
+    val patternType: PatternType? = null,
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
 )
 
 /** Largest pattern grid the user can create, so cells stay tappable. */
 internal const val MAX_PATTERN_SIZE = 50
+
+@StringRes
+internal fun PatternType.labelRes(): Int = when (this) {
+    PatternType.Cables -> R.string.pattern_type_cables
+    PatternType.Colorwork -> R.string.pattern_type_colorwork
+}
 
 @StringRes
 internal fun StepType.labelRes(): Int = when (this) {
@@ -56,7 +68,6 @@ internal fun StepType.labelRes(): Int = when (this) {
     StepType.Pattern -> R.string.step_type_pattern
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddStepDialog(
     onDismiss: () -> Unit,
@@ -70,6 +81,7 @@ fun AddStepDialog(
     var needleSize by rememberSaveable { mutableStateOf("") }
     var shapingCount by rememberSaveable { mutableStateOf("") }
     var pattern by rememberSaveable { mutableStateOf("") }
+    var patternType by rememberSaveable { mutableStateOf(PatternType.Colorwork) }
     var gridRows by rememberSaveable { mutableStateOf("") }
     var gridColumns by rememberSaveable { mutableStateOf("") }
 
@@ -83,7 +95,7 @@ fun AddStepDialog(
     }
     val newStep = when (type) {
         StepType.Pattern -> gridSize?.let { (r, c) ->
-            NewStep(name = name, type = type, patternRows = r, patternColumns = c)
+            NewStep(name = name, type = type, patternType = patternType, patternRows = r, patternColumns = c)
         }
         StepType.Increases, StepType.Decreases -> shaping?.takeIf { it > 0 }?.let {
             NewStep(
@@ -117,31 +129,52 @@ fun AddStepDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Text(
-                    text = stringResource(R.string.step_type),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.padding(top = 12.dp),
+                EnumDropdown(
+                    labelRes = R.string.step_type,
+                    selected = type,
+                    options = StepType.entries,
+                    optionLabelRes = StepType::labelRes,
+                    onSelect = { type = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp),
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    StepType.entries.forEach { option ->
-                        FilterChip(
-                            selected = option == type,
-                            onClick = { type = option },
-                            label = { Text(stringResource(option.labelRes())) },
+                if (type == StepType.Pattern) {
+                    EnumDropdown(
+                        labelRes = R.string.step_pattern_type,
+                        selected = patternType,
+                        options = PatternType.entries,
+                        optionLabelRes = PatternType::labelRes,
+                        onSelect = { patternType = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    )
+                    // Entered as "rows × columns", side by side.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        NumberField(
+                            value = gridRows,
+                            onValueChange = { gridRows = it },
+                            labelRes = R.string.step_pattern_rows,
+                            modifier = Modifier.weight(1f),
+                        )
+                        Text(
+                            text = "×",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                        )
+                        NumberField(
+                            value = gridColumns,
+                            onValueChange = { gridColumns = it },
+                            labelRes = R.string.step_pattern_columns,
+                            modifier = Modifier.weight(1f),
                         )
                     }
-                }
-                if (type == StepType.Pattern) {
-                    NumberField(
-                        value = gridRows,
-                        onValueChange = { gridRows = it },
-                        labelRes = R.string.step_pattern_rows,
-                    )
-                    NumberField(
-                        value = gridColumns,
-                        onValueChange = { gridColumns = it },
-                        labelRes = R.string.step_pattern_columns,
-                    )
                     Text(
                         text = stringResource(R.string.step_pattern_size_hint, MAX_PATTERN_SIZE),
                         style = MaterialTheme.typography.bodySmall,
@@ -223,11 +256,55 @@ fun AddStepDialog(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun <T> EnumDropdown(
+    @StringRes labelRes: Int,
+    selected: T,
+    options: List<T>,
+    optionLabelRes: (T) -> Int,
+    onSelect: (T) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+        modifier = modifier,
+    ) {
+        OutlinedTextField(
+            value = stringResource(optionLabelRes(selected)),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(stringResource(labelRes)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            options.forEach { option ->
+                DropdownMenuItem(
+                    text = { Text(stringResource(optionLabelRes(option))) },
+                    onClick = {
+                        onSelect(option)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun NumberField(
     value: String,
     onValueChange: (String) -> Unit,
     @StringRes labelRes: Int,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 12.dp),
 ) {
     OutlinedTextField(
         value = value,
@@ -235,9 +312,7 @@ private fun NumberField(
         label = { Text(stringResource(labelRes)) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 12.dp),
+        modifier = modifier,
     )
 }
 

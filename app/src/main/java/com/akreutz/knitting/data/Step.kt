@@ -35,6 +35,8 @@ data class Step(
     val shapingCount: Int? = null,
     /** Increases and decreases: where they go, e.g. "every 4th row". */
     val pattern: String? = null,
+    /** Pattern: what kind of pattern the grid describes. */
+    val patternType: PatternType? = null,
     /** Pattern: grid size. */
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
