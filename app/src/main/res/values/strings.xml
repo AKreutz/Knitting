@@ -55,6 +55,12 @@
     <string name="step_type_decreases">Decreases</string>
     <string name="step_type_plain_rows">Plain rows</string>
     <string name="step_type_pattern">Pattern</string>
+    <string name="step_type_special">Special</string>
+    <string name="step_description_optional">Description (optional)</string>
+    <string name="step_done">Done</string>
+    <string name="step_not_done">Not done yet</string>
+    <string name="mark_done">Mark done</string>
+    <string name="undo">Undo</string>
     <string name="step_stitch_count">Stitch count</string>
     <string name="step_method_optional">Method (optional)</string>
     <string name="step_color_optional">Color (optional)</string>

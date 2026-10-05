@@ -34,6 +34,7 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         stitchCount = stitchCount,
         method = method,
         needleSize = needleSize,
+        description = description,
         shapingCount = shapingCount,
         pattern = pattern,
         patternType = patternType,

@@ -108,6 +108,7 @@ internal fun Step.unitRes(): Int? = when (type) {
     StepType.Decreases -> R.plurals.decreases_count
     StepType.PlainRows -> R.plurals.rows_count
     StepType.Pattern -> R.plurals.pattern_repeats_count
+    StepType.Special -> null
 }
 
 /** How much a tap on a step's counter adds or removes. */
@@ -117,6 +118,7 @@ internal fun Step.increment(): Int = if (type == StepType.CastOn) 10 else 1
 internal fun Step.details(): String = (when (type) {
     StepType.CastOn -> listOfNotNull(method, needleSize)
     StepType.Increases, StepType.Decreases -> listOfNotNull(pattern)
+    StepType.Special -> listOfNotNull(description)
     else -> emptyList()
 } + listOfNotNull(color)).joinToString(" · ")
 
@@ -146,6 +148,25 @@ internal fun StepCounter(
     modifier: Modifier = Modifier,
 ) {
     val target = step.progressTarget() ?: return
+    if (step.type == StepType.Special) {
+        val done = step.progress >= target
+        Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(if (done) R.string.step_done else R.string.step_not_done),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            if (onProgressChange != null) {
+                FilledTonalButton(onClick = { onProgressChange(step, if (done) 0 else target) }) {
+                    Text(stringResource(if (done) R.string.undo else R.string.mark_done))
+                }
+            }
+        }
+        return
+    }
     val unit = step.unitRes() ?: return
     val increment = step.increment()
     Row(

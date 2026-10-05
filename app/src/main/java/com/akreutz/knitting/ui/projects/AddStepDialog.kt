@@ -47,6 +47,7 @@ data class NewStep(
     val stitchCount: Int? = null,
     val method: String? = null,
     val needleSize: String? = null,
+    val description: String? = null,
     val shapingCount: Int? = null,
     val pattern: String? = null,
     val patternType: PatternType? = null,
@@ -64,6 +65,7 @@ internal fun Step.toNewStep() = NewStep(
     stitchCount = stitchCount,
     method = method,
     needleSize = needleSize,
+    description = description,
     shapingCount = shapingCount,
     pattern = pattern,
     patternType = patternType,
@@ -97,6 +99,7 @@ internal fun StepType.labelRes(): Int = when (this) {
     StepType.Decreases -> R.string.step_type_decreases
     StepType.PlainRows -> R.string.step_type_plain_rows
     StepType.Pattern -> R.string.step_type_pattern
+    StepType.Special -> R.string.step_type_special
 }
 
 @Composable
@@ -117,6 +120,7 @@ fun AddStepDialog(
     var stitchCount by rememberSaveable { mutableStateOf(initial?.stitchCount?.toString().orEmpty()) }
     var method by rememberSaveable { mutableStateOf(initial?.method.orEmpty()) }
     var needleSize by rememberSaveable { mutableStateOf(initial?.needleSize.orEmpty()) }
+    var description by rememberSaveable { mutableStateOf(initial?.description.orEmpty()) }
     var shapingCount by rememberSaveable { mutableStateOf(initial?.shapingCount?.toString().orEmpty()) }
     var pattern by rememberSaveable { mutableStateOf(initial?.pattern.orEmpty()) }
     var patternType by rememberSaveable { mutableStateOf(initial?.patternType ?: PatternType.Cables) }
@@ -164,6 +168,11 @@ fun AddStepDialog(
                 needleSize = needleSize.trim().ifEmpty { null },
             )
         }
+        StepType.Special -> NewStep(
+            name = name,
+            type = type,
+            description = description.trim().ifEmpty { null },
+        )
         else -> rows?.takeIf { it > 0 }?.let {
             NewStep(
                 name = name,
@@ -303,6 +312,17 @@ fun AddStepDialog(
                         onValueChange = { needleSize = it },
                         label = { Text(stringResource(R.string.step_needle_size_optional)) },
                         singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 12.dp),
+                    )
+                } else if (type == StepType.Special) {
+                    OutlinedTextField(
+                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                        value = description,
+                        onValueChange = { description = it },
+                        label = { Text(stringResource(R.string.step_description_optional)) },
+                        minLines = 3,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 12.dp),

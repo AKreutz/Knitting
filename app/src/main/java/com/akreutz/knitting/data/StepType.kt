@@ -6,4 +6,5 @@ enum class StepType {
     Decreases,
     PlainRows,
     Pattern,
+    Special,
 }

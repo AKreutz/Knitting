@@ -198,7 +198,8 @@ private fun CurrentStepPanel(
             }
             val target = step.progressTarget()
             if (target != null) {
-                LinearProgressIndicator(
+                // A single check-off has nothing to show a bar for.
+                if (step.type != StepType.Special) LinearProgressIndicator(
                     progress = { (step.progress / target.toFloat()).coerceIn(0f, 1f) },
                     color = MaterialTheme.colorScheme.onSecondary,
                     trackColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.3f),

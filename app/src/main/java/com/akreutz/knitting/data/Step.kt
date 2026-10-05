@@ -51,6 +51,8 @@ data class Step(
     val patternCells: String? = null,
     /** Plain rows: the stitch sequence worked. */
     val rowPattern: RowPattern? = null,
+    /** Special: free-text description of what to do. */
+    val description: String? = null,
     /** Cast-on stitches, increases, decreases, plain rows or pattern repeats done so far, tracked while in progress. */
     val progress: Int = 0,
     /** Pattern: rows of the current repeat already knitted, tracked while in progress. */
@@ -63,4 +65,6 @@ fun Step.progressTarget(): Int? = when (type) {
     StepType.Increases, StepType.Decreases -> shapingCount
     StepType.PlainRows -> targetRows
     StepType.Pattern -> patternRepeats
+    // A special step is checked off: 0 = open, 1 = done.
+    StepType.Special -> 1
 }
