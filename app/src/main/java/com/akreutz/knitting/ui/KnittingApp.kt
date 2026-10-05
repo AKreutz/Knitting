@@ -38,6 +38,7 @@ fun KnittingApp() {
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(current.label), style = MaterialTheme.typography.headlineSmall) },
+                actions = { LanguageButton() },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             )
         },

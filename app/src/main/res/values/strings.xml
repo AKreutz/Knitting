@@ -1,8 +1,12 @@
 <resources>
     <string name="app_name">Knitting</string>
+    <string name="language">Language</string>
+    <string name="language_system_default">System default</string>
+    <string name="language_english">English</string>
+    <string name="language_german">Deutsch</string>
     <string name="nav_projects">Projects</string>
     <string name="nav_in_progress">In progress</string>
-    <string name="projects_empty">No projects yet. Tap + to add one.</string>
+    <string name="projects_empty">No projects yet.</string>
     <string name="add_project_title">Add project</string>
     <string name="project_name">Name</string>
     <string name="project_description_optional">Description (optional)</string>
