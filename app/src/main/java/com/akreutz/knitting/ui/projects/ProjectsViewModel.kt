@@ -106,14 +106,19 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
                     old.patternType == new.patternType &&
                     old.patternRows == new.patternRows &&
                     old.patternColumns == new.patternColumns
-                dao.updateStep(
-                    new.toStep(project.id).copy(
-                        id = old.id,
-                        patternCells = old.patternCells.takeIf { sameGrid },
-                        progress = old.progress,
-                        patternRow = old.patternRow,
-                    ),
+                val updated = new.toStep(project.id).copy(
+                    id = old.id,
+                    patternCells = old.patternCells.takeIf { sameGrid },
                 )
+                // Keep the counters, but never beyond the edited targets (e.g. fewer repeats than done).
+                val progress = old.progress.coerceIn(0, updated.progressTarget() ?: 0)
+                val patternRows = updated.patternRows
+                val patternRow = if (updated.type == StepType.Pattern && patternRows != null && progress < (updated.progressTarget() ?: 0)) {
+                    old.patternRow.coerceIn(0, patternRows - 1)
+                } else {
+                    0
+                }
+                dao.updateStep(updated.copy(progress = progress, patternRow = patternRow))
             }
             addedSteps.forEach { dao.insertStep(it.toStep(project.id)) }
         }

@@ -229,7 +229,7 @@ internal fun ProjectCard(
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
-                    if (onEditClick != null && project.status == ProjectStatus.Created) {
+                    if (onEditClick != null && project.status != ProjectStatus.Finished) {
                         IconButton(onClick = onEditClick) {
                             Icon(
                                 Icons.Filled.Edit,
