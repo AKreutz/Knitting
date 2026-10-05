@@ -48,6 +48,15 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { dao.updatePatternCells(step.id, cells) }
     }
 
+    /** Gives [target] its own copy of [source]'s grid: type, size and painted cells. */
+    fun copyPatternGrid(target: Step, source: Step) {
+        val rows = source.patternRows ?: return
+        val columns = source.patternColumns ?: return
+        viewModelScope.launch {
+            dao.updatePatternGrid(target.id, source.patternType, rows, columns, source.patternCells)
+        }
+    }
+
     fun setStepProgress(step: Step, progress: Int) {
         val max = step.progressTarget() ?: return
         val clamped = progress.coerceIn(0, max)

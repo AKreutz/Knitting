@@ -30,6 +30,13 @@ interface ProjectDao {
     @Query("UPDATE steps SET patternCells = :patternCells WHERE id = :id")
     suspend fun updatePatternCells(id: Long, patternCells: String)
 
+    /** Replaces a pattern step's whole grid; the row count within the repeat restarts as the size may differ. */
+    @Query(
+        "UPDATE steps SET patternType = :patternType, patternRows = :rows, patternColumns = :columns, " +
+            "patternCells = :cells, patternRow = 0 WHERE id = :id",
+    )
+    suspend fun updatePatternGrid(id: Long, patternType: PatternType?, rows: Int, columns: Int, cells: String?)
+
     @Query("UPDATE steps SET progress = :progress WHERE id = :id")
     suspend fun updateStepProgress(id: Long, progress: Int)
 

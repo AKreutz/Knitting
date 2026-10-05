@@ -89,6 +89,7 @@ fun ProjectsScreen(
         onProjectStartClick = { projectToStartId = it.id },
         onProjectEditClick = { projectToEditId = it.id },
         onPatternCellsChange = viewModel::setPatternCells,
+        onCopyGrid = viewModel::copyPatternGrid,
         modifier = modifier,
     )
 
@@ -152,6 +153,7 @@ private fun ProjectsContent(
     onProjectStartClick: (Project) -> Unit,
     onProjectEditClick: (Project) -> Unit,
     onPatternCellsChange: (Step, String) -> Unit,
+    onCopyGrid: (Step, Step) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -183,6 +185,7 @@ private fun ProjectsContent(
                         steps = stepsByProject[project.id].orEmpty(),
                         modifier = Modifier.animateItem(),
                         onPatternCellsChange = onPatternCellsChange,
+                        onCopyGrid = onCopyGrid,
                         onStartClick = { onProjectStartClick(project) },
                         onEditClick = { onProjectEditClick(project) },
                     )
@@ -212,6 +215,7 @@ internal fun ProjectCard(
     onEditClick: (() -> Unit)? = null,
     onStepProgressChange: ((Step, Int) -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
+    onCopyGrid: ((target: Step, source: Step) -> Unit)? = null,
 ) {
     Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
         Row(modifier = Modifier.height(IntrinsicSize.Min)) {
@@ -286,6 +290,9 @@ internal fun ProjectCard(
                                     inProgress = project.status == ProjectStatus.InProgress,
                                     onProgressChange = onStepProgressChange,
                                     onPatternCellsChange = onPatternCellsChange,
+                                    gridEditable = true,
+                                    copyGridSources = steps.filter { it.id != step.id && it.hasGrid() },
+                                    onCopyGrid = onCopyGrid,
                                     modifier = Modifier.padding(top = Spacing.sm),
                                 )
                             }
@@ -392,6 +399,7 @@ private fun ProjectsContentPreview() {
             onProjectStartClick = {},
             onProjectEditClick = {},
             onPatternCellsChange = { _, _ -> },
+            onCopyGrid = { _, _ -> },
         )
     }
 }

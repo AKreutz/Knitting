@@ -94,6 +94,7 @@
         <item quantity="other">%1$d Wiederholungen</item>
     </plurals>
     <string name="step_pattern_size_hint">Bis zu %1$d × %1$d</string>
+    <string name="copy_grid_from">Raster kopieren von…</string>
     <string name="pattern_size">%1$d × %2$d</string>
     <string name="pattern_color">Farbe %1$d</string>
     <string name="pattern_erase">Löschen</string>

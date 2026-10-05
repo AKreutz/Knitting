@@ -93,6 +93,7 @@
         <item quantity="other">%1$d repeats</item>
     </plurals>
     <string name="step_pattern_size_hint">Up to %1$d × %1$d</string>
+    <string name="copy_grid_from">Copy grid from…</string>
     <string name="pattern_size">%1$d × %2$d</string>
     <string name="pattern_color">Color %1$d</string>
     <string name="pattern_erase">Erase</string>

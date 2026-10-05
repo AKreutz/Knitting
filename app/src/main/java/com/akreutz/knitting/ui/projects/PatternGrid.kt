@@ -259,6 +259,8 @@ internal fun PatternGrid(
     modifier: Modifier = Modifier,
     editable: Boolean = true,
     completedRows: Int = 0,
+    /** Extra actions shown under the palette, only while the grid is being edited. */
+    editActions: (@Composable () -> Unit)? = null,
 ) {
     val cables = patternType == PatternType.Cables
     val size = rows * columns
@@ -611,6 +613,7 @@ internal fun PatternGrid(
                 )
             }
         }
+        if (editable && !saved) editActions?.invoke()
     }
 }
 

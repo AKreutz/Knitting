@@ -3,26 +3,34 @@ package com.akreutz.knitting.ui.projects
 import androidx.annotation.PluralsRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
@@ -40,6 +48,10 @@ internal fun StepRow(
     onProgressChange: ((Step, Int) -> Unit)?,
     onPatternCellsChange: ((Step, String) -> Unit)?,
     modifier: Modifier = Modifier,
+    gridEditable: Boolean = !inProgress,
+    /** Other pattern steps whose grid can be copied into this one; only offered while the grid is editable. */
+    copyGridSources: List<Step> = emptyList(),
+    onCopyGrid: ((target: Step, source: Step) -> Unit)? = null,
 ) {
     var expanded by rememberSaveable(step.id) { mutableStateOf(false) }
     val rows = step.patternRows
@@ -84,17 +96,61 @@ internal fun StepRow(
                     StepCounter(step, onProgressChange, modifier = Modifier.padding(top = Spacing.xs))
                 }
                 if (hasGrid) {
-                    // The grid is painted while planning the project; once it is in progress it is only shown.
+                    // The grid is painted while planning; in progress it is only editable where the caller allows it.
                     PatternGrid(
                         rows = rows,
                         columns = columns,
                         patternType = step.patternType,
                         storedCells = step.patternCells,
                         onCellsChange = { onPatternCellsChange?.invoke(step, it) },
-                        editable = !inProgress,
+                        editable = gridEditable,
+                        editActions = if (onCopyGrid != null && copyGridSources.isNotEmpty()) {
+                            {
+                                CopyGridButton(
+                                    sources = copyGridSources,
+                                    onSelect = { onCopyGrid(step, it) },
+                                )
+                            }
+                        } else {
+                            null
+                        },
                         modifier = Modifier.padding(top = Spacing.sm),
                     )
                 }
+            }
+        }
+    }
+}
+
+/** Whether a step is a pattern step with a grid size, i.e. something to show, paint or copy. */
+internal fun Step.hasGrid(): Boolean = type == StepType.Pattern && patternRows != null && patternColumns != null
+
+/** A button that opens a menu of the steps whose grid can be copied into the current one. */
+@Composable
+private fun CopyGridButton(
+    sources: List<Step>,
+    onSelect: (Step) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        TextButton(onClick = { menuOpen = true }) {
+            Icon(Icons.Filled.ContentCopy, contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(stringResource(R.string.copy_grid_from), modifier = Modifier.padding(start = Spacing.xs))
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            sources.forEach { source ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            "${source.name} · ${stringResource(R.string.pattern_size, source.patternRows ?: 0, source.patternColumns ?: 0)}",
+                        )
+                    },
+                    onClick = {
+                        menuOpen = false
+                        onSelect(source)
+                    },
+                )
             }
         }
     }
