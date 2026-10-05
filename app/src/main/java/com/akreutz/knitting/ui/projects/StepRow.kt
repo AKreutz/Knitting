@@ -83,7 +83,7 @@ internal fun StepRow(
                 if (hasCounter) {
                     StepCounter(step, onProgressChange, modifier = Modifier.padding(top = Spacing.xs))
                 }
-                if (hasGrid && rows != null && columns != null) {
+                if (hasGrid) {
                     // The grid is painted while planning the project; once it is in progress it is only shown.
                     PatternGrid(
                         rows = rows,
