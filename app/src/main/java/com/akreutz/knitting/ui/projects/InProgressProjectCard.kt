@@ -192,7 +192,10 @@ private fun CurrentStepPanel(
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.fillMaxWidth(),
             )
-            val details = step.details()
+            val details = listOfNotNull(
+                step.rowPattern?.let { stringResource(it.labelRes()) },
+                step.details().ifEmpty { null },
+            ).joinToString(" · ")
             if (details.isNotEmpty()) {
                 Text(text = details, style = MaterialTheme.typography.bodySmall)
             }
