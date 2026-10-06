@@ -42,6 +42,8 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         patternRows = patternRows,
         patternColumns = patternColumns,
         patternRepeats = patternRepeats,
+        trackInCm = trackInCm,
+        targetMm = targetMm,
     )
 
     fun setPatternCells(step: Step, cells: String) {
@@ -61,8 +63,9 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         val max = step.progressTarget() ?: return
         val clamped = progress.coerceIn(0, max)
         viewModelScope.launch {
-            // Changing the repeat count by hand restarts the row count within the repeat.
-            if (step.type == StepType.Pattern) dao.updatePatternProgress(step.id, clamped, 0)
+            // Changing the repeat count by hand restarts the row count within the repeat;
+            // centimeters are independent of the rows.
+            if (step.type == StepType.Pattern && !step.trackInCm) dao.updatePatternProgress(step.id, clamped, 0)
             else dao.updateStepProgress(step.id, clamped)
         }
     }
@@ -70,6 +73,12 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
     /** Moves a pattern step one row forward or back; finishing a repeat's last row completes that repeat. */
     fun stepPatternRow(step: Step, delta: Int) {
         val rows = step.patternRows ?: return
+        if (step.trackInCm) {
+            // The length is counted in centimeters by hand, so the rows just cycle through the grid.
+            val next = Math.floorMod(step.patternRow + delta, rows)
+            viewModelScope.launch { dao.updatePatternProgress(step.id, step.progress, next) }
+            return
+        }
         val repeats = step.progressTarget() ?: return
         // Linear position over all rows of all repeats keeps the wrap-around arithmetic in one place.
         val position = (step.progress * rows + step.patternRow + delta).coerceIn(0, repeats * rows)
@@ -123,7 +132,9 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
                 // Keep the counters, but never beyond the edited targets (e.g. fewer repeats than done).
                 val progress = old.progress.coerceIn(0, updated.progressTarget() ?: 0)
                 val patternRows = updated.patternRows
-                val patternRow = if (updated.type == StepType.Pattern && patternRows != null && progress < (updated.progressTarget() ?: 0)) {
+                val patternRow = if (updated.type == StepType.Pattern && patternRows != null &&
+                    (updated.trackInCm || progress < (updated.progressTarget() ?: 0))
+                ) {
                     old.patternRow.coerceIn(0, patternRows - 1)
                 } else {
                     0

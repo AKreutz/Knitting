@@ -256,16 +256,16 @@ private fun PatternRowCounter(
         )
         FilledTonalButton(
             onClick = { onRowStep(step, -1) },
-            enabled = step.progress > 0 || step.patternRow > 0,
+            enabled = step.trackInCm || step.progress > 0 || step.patternRow > 0,
         ) {
-            Text(stringResource(R.string.remove_count, 1))
+            Text(stringResource(R.string.remove_count, "1"))
         }
         FilledTonalButton(
             onClick = { onRowStep(step, 1) },
-            enabled = step.progress < repeats,
+            enabled = step.trackInCm || step.progress < repeats,
             modifier = Modifier.padding(start = Spacing.sm),
         ) {
-            Text(stringResource(R.string.add_count, 1))
+            Text(stringResource(R.string.add_count, "1"))
         }
     }
 }

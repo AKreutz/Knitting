@@ -32,10 +32,12 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
+import com.akreutz.knitting.data.MM_PER_CM
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
 import com.akreutz.knitting.ui.theme.Spacing
+import java.text.NumberFormat
 
 /**
  * One step on a project card. Collapsed, it is a single line with the name and type; tapping it
@@ -167,8 +169,39 @@ internal fun Step.unitRes(): Int? = when (type) {
     StepType.Special -> null
 }
 
-/** How much a tap on a step's counter adds or removes. */
-internal fun Step.increment(): Int = if (type == StepType.CastOn) 10 else 1
+/** [count] with its unit, e.g. "12 rows" or "2.5 cm"; [count] is in millimeters for centimeter steps. */
+@Composable
+private fun Step.amountText(count: Int): String {
+    val unit = unitRes() ?: return count.toString()
+    return if (trackInCm) {
+        stringResource(R.string.cm_value, formatCm(count))
+    } else {
+        pluralStringResource(unit, count, count)
+    }
+}
+
+/** Millimeters as centimeters in the user's locale, with a decimal only when there is one. */
+private fun formatCm(mm: Int): String =
+    NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }.format(mm / MM_PER_CM.toDouble())
+
+/** The size of a regular tap on a step's counter: a whole centimeter, 10 cast-on stitches or a single count. */
+private fun Step.chunk(): Int = when {
+    trackInCm -> MM_PER_CM
+    type == StepType.CastOn -> 10
+    else -> 1
+}
+
+/** How much a tap on a step's counter adds; less than a full chunk when that is all that is left. */
+internal fun Step.increment(): Int {
+    val remaining = (progressTarget() ?: 0) - progress
+    return if (remaining in 1 until chunk()) remaining else chunk()
+}
+
+/** How much a tap on a step's counter removes; a partial chunk (e.g. 2.5 cm or 25 stitches) goes first. */
+internal fun Step.decrement(): Int {
+    val partial = progress % chunk()
+    return if (partial > 0) partial else chunk()
+}
 
 /** The step's entered details that are worth showing once it is expanded. */
 internal fun Step.details(): String = (when (type) {
@@ -182,17 +215,16 @@ internal fun Step.details(): String = (when (type) {
 @Composable
 private fun summaryText(step: Step): String? {
     val target = step.progressTarget()
-    val unit = step.unitRes()
     return if (step.type == StepType.Pattern) {
         listOfNotNull(
             step.patternType?.let { stringResource(it.labelRes()) },
             stringResource(R.string.pattern_size, step.patternRows ?: 0, step.patternColumns ?: 0),
-            step.patternRepeats?.let { pluralStringResource(R.plurals.pattern_repeats_count, it, it) },
+            target?.let { step.amountText(it) },
         ).joinToString(" · ")
     } else {
         listOfNotNull(
             step.rowPattern?.let { stringResource(it.labelRes()) },
-            (target ?: step.targetRows)?.let { pluralStringResource(unit ?: R.plurals.rows_count, it, it) },
+            (target ?: step.targetRows)?.let { step.amountText(it) },
         ).joinToString(" · ").ifEmpty { null }
     }
 }
@@ -223,8 +255,11 @@ internal fun StepCounter(
         }
         return
     }
-    val unit = step.unitRes() ?: return
+    if (step.unitRes() == null) return
     val increment = step.increment()
+    val decrement = step.decrement()
+    // Centimeter steps count in millimeters but their buttons are labeled in centimeters.
+    fun label(amount: Int) = if (step.trackInCm) formatCm(amount) else amount.toString()
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -232,25 +267,25 @@ internal fun StepCounter(
         Text(
             text = stringResource(
                 R.string.step_progress,
-                step.progress,
-                pluralStringResource(unit, target, target),
+                if (step.trackInCm) formatCm(step.progress) else step.progress.toString(),
+                step.amountText(target),
             ),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
         if (onProgressChange != null) {
             FilledTonalButton(
-                onClick = { onProgressChange(step, step.progress - increment) },
+                onClick = { onProgressChange(step, step.progress - decrement) },
                 enabled = step.progress > 0,
             ) {
-                Text(stringResource(R.string.remove_count, increment))
+                Text(stringResource(R.string.remove_count, label(decrement)))
             }
             FilledTonalButton(
                 onClick = { onProgressChange(step, step.progress + increment) },
                 enabled = step.progress < target,
                 modifier = Modifier.padding(start = Spacing.sm),
             ) {
-                Text(stringResource(R.string.add_count, increment))
+                Text(stringResource(R.string.add_count, label(increment)))
             }
         }
     }

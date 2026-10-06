@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Project::class, Step::class], version = 20, exportSchema = false)
+@Database(entities = [Project::class, Step::class], version = 21, exportSchema = false)
 abstract class KnittingDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
 
@@ -22,6 +22,14 @@ abstract class KnittingDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds centimeter tracking for plain rows and pattern steps. */
+        private val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE steps ADD COLUMN trackInCm INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE steps ADD COLUMN targetMm INTEGER")
+            }
+        }
+
         fun get(context: Context): KnittingDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -31,7 +39,7 @@ abstract class KnittingDatabase : RoomDatabase() {
                 )
                     // Only versions before 19 are wiped; from 19 on, schema changes need a migration.
                     .fallbackToDestructiveMigrationFrom(true, *IntArray(18) { it + 1 })
-                    .addMigrations(MIGRATION_19_20)
+                    .addMigrations(MIGRATION_19_20, MIGRATION_20_21)
                     .build()
                     .also { instance = it }
             }

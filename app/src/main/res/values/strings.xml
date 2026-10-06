@@ -104,18 +104,21 @@
     <string name="pattern_pan">Move grid</string>
     <string name="pattern_save">Save</string>
     <string name="pattern_edit">Edit</string>
-    <string name="step_progress">%1$d / %2$s</string>
+    <string name="step_progress">%1$s / %2$s</string>
     <plurals name="increases_count">
         <item quantity="one">%1$d increase</item>
         <item quantity="other">%1$d increases</item>
     </plurals>
     <string name="pattern_row_progress">%1$d / %2$d rows</string>
-    <string name="add_count">+%1$d</string>
-    <string name="remove_count">−%1$d</string>
+    <string name="add_count">+%1$s</string>
+    <string name="remove_count">−%1$s</string>
     <plurals name="stitches_count">
         <item quantity="one">%1$d stitch</item>
         <item quantity="other">%1$d stitches</item>
     </plurals>
+    <string name="step_target_cm">Target length (cm)</string>
+    <string name="step_track_in_cm">Track length in centimeters</string>
+    <string name="cm_value">%1$s cm</string>
     <plurals name="rows_count">
         <item quantity="one">%1$d row</item>
         <item quantity="other">%1$d rows</item>

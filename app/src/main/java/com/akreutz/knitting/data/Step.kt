@@ -1,5 +1,6 @@
 package com.akreutz.knitting.data
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -53,18 +54,28 @@ data class Step(
     val rowPattern: RowPattern? = null,
     /** Special: free-text description of what to do. */
     val description: String? = null,
-    /** Cast-on stitches, increases, decreases, plain rows or pattern repeats done so far, tracked while in progress. */
+    /** Plain rows and pattern: whether the section's length is tracked in centimeters instead of rows or repeats. */
+    @ColumnInfo(defaultValue = "0")
+    val trackInCm: Boolean = false,
+    /** Plain rows and pattern: length in millimeters (so 2.5 cm is 25) this step should reach when [trackInCm] is set. */
+    val targetMm: Int? = null,
+    /**
+     * Cast-on stitches, increases, decreases, plain rows or pattern repeats done so far, tracked while in
+     * progress; millimeters when [trackInCm] is set.
+     */
     val progress: Int = 0,
     /** Pattern: rows of the current repeat already knitted, tracked while in progress. */
     val patternRow: Int = 0,
 )
 
+const val MM_PER_CM = 10
+
 /** What [Step.progress] counts up to, or null for step types that have no counter. */
 fun Step.progressTarget(): Int? = when (type) {
     StepType.CastOn -> stitchCount
     StepType.Increases, StepType.Decreases -> shapingCount
-    StepType.PlainRows -> targetRows
-    StepType.Pattern -> patternRepeats
+    StepType.PlainRows -> if (trackInCm) targetMm else targetRows
+    StepType.Pattern -> if (trackInCm) targetMm else patternRepeats
     // A special step is checked off: 0 = open, 1 = done.
     StepType.Special -> 1
 }

@@ -105,18 +105,21 @@
     <string name="pattern_pan">Raster verschieben</string>
     <string name="pattern_save">Speichern</string>
     <string name="pattern_edit">Bearbeiten</string>
-    <string name="step_progress">%1$d / %2$s</string>
+    <string name="step_progress">%1$s / %2$s</string>
     <plurals name="increases_count">
         <item quantity="one">%1$d Zunahme</item>
         <item quantity="other">%1$d Zunahmen</item>
     </plurals>
     <string name="pattern_row_progress">%1$d / %2$d Reihen</string>
-    <string name="add_count">+%1$d</string>
-    <string name="remove_count">−%1$d</string>
+    <string name="add_count">+%1$s</string>
+    <string name="remove_count">−%1$s</string>
     <plurals name="stitches_count">
         <item quantity="one">%1$d Masche</item>
         <item quantity="other">%1$d Maschen</item>
     </plurals>
+    <string name="step_target_cm">Ziel-Länge (cm)</string>
+    <string name="step_track_in_cm">Länge in Zentimetern verfolgen</string>
+    <string name="cm_value">%1$s cm</string>
     <plurals name="rows_count">
         <item quantity="one">%1$d Reihe</item>
         <item quantity="other">%1$d Reihen</item>

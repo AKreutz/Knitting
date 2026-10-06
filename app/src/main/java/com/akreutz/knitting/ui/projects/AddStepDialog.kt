@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -27,11 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
+import com.akreutz.knitting.data.MM_PER_CM
 import com.akreutz.knitting.data.PatternType
 import com.akreutz.knitting.data.RowPattern
 import com.akreutz.knitting.data.Step
@@ -55,6 +59,8 @@ data class NewStep(
     val patternRows: Int? = null,
     val patternColumns: Int? = null,
     val patternRepeats: Int? = null,
+    val trackInCm: Boolean = false,
+    val targetMm: Int? = null,
 )
 
 internal fun Step.toNewStep() = NewStep(
@@ -73,6 +79,8 @@ internal fun Step.toNewStep() = NewStep(
     patternRows = patternRows,
     patternColumns = patternColumns,
     patternRepeats = patternRepeats,
+    trackInCm = trackInCm,
+    targetMm = targetMm,
 )
 
 /** Largest pattern grid the user can create, so cells stay tappable. */
@@ -129,8 +137,12 @@ fun AddStepDialog(
     var gridColumns by rememberSaveable { mutableStateOf(initial?.patternColumns?.toString().orEmpty()) }
     var patternRepeats by rememberSaveable { mutableStateOf(initial?.patternRepeats?.toString() ?: "1") }
 
+    var trackInCm by rememberSaveable { mutableStateOf(initial?.trackInCm ?: false) }
+    var targetCm by rememberSaveable { mutableStateOf(initial?.targetMm?.let(::mmToText).orEmpty()) }
+
     val rows = targetRows.toIntOrNull()
     val repeats = patternRepeats.toIntOrNull()
+    val lengthMm = textToMm(targetCm)?.takeIf { it > 0 }
     val stitches = stitchCount.toIntOrNull()
     val shaping = shapingCount.toIntOrNull()
     val gridSize = MAX_PATTERN_SIZE.let { max ->
@@ -140,14 +152,17 @@ fun AddStepDialog(
     }
     val newStep = when (type) {
         StepType.Pattern -> gridSize?.let { (r, c) ->
-            repeats?.takeIf { it > 0 }?.let {
+            val length = if (trackInCm) lengthMm else repeats?.takeIf { it > 0 }
+            length?.let {
                 NewStep(
                     name = name,
                     type = type,
                     patternType = patternType,
                     patternRows = r,
                     patternColumns = c,
-                    patternRepeats = it,
+                    patternRepeats = if (trackInCm) null else it,
+                    trackInCm = trackInCm,
+                    targetMm = if (trackInCm) it else null,
                 )
             }
         }
@@ -173,12 +188,14 @@ fun AddStepDialog(
             type = type,
             description = description.trim().ifEmpty { null },
         )
-        else -> rows?.takeIf { it > 0 }?.let {
+        else -> (if (trackInCm) lengthMm else rows?.takeIf { it > 0 })?.let {
             NewStep(
                 name = name,
                 type = type,
-                targetRows = it,
+                targetRows = if (trackInCm) null else it,
                 rowPattern = rowPattern.takeIf { type == StepType.PlainRows },
+                trackInCm = trackInCm,
+                targetMm = if (trackInCm) it else null,
             )
         }
     }?.copy(color = color.trim().ifEmpty { null })
@@ -258,11 +275,20 @@ fun AddStepDialog(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(top = 4.dp),
                     )
-                    NumberField(
-                        value = patternRepeats,
-                        onValueChange = { patternRepeats = it },
-                        labelRes = R.string.step_pattern_repeats,
-                    )
+                    CmToggle(trackInCm) { trackInCm = it }
+                    if (trackInCm) {
+                        DecimalField(
+                            value = targetCm,
+                            onValueChange = { targetCm = it },
+                            labelRes = R.string.step_target_cm,
+                        )
+                    } else {
+                        NumberField(
+                            value = patternRepeats,
+                            onValueChange = { patternRepeats = it },
+                            labelRes = R.string.step_pattern_repeats,
+                        )
+                    }
                 } else if (type == StepType.Increases || type == StepType.Decreases) {
                     val increases = type == StepType.Increases
                     NumberField(
@@ -345,13 +371,23 @@ fun AddStepDialog(
                                     .padding(end = 8.dp),
                             )
                         }
-                        NumberField(
-                            value = targetRows,
-                            onValueChange = { targetRows = it },
-                            labelRes = R.string.step_target_rows,
-                            modifier = Modifier.weight(1f),
-                        )
+                        if (trackInCm) {
+                            DecimalField(
+                                value = targetCm,
+                                onValueChange = { targetCm = it },
+                                labelRes = R.string.step_target_cm,
+                                modifier = Modifier.weight(1f),
+                            )
+                        } else {
+                            NumberField(
+                                value = targetRows,
+                                onValueChange = { targetRows = it },
+                                labelRes = R.string.step_target_rows,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
                     }
+                    CmToggle(trackInCm) { trackInCm = it }
                 }
             }
         },
@@ -410,6 +446,58 @@ private fun <T> EnumDropdown(
             }
         }
     }
+}
+
+/** Switches a plain rows or pattern step between tracking its length in rows or repeats and in centimeters. */
+@Composable
+private fun CmToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 4.dp)
+            .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Checkbox(checked = checked, onCheckedChange = null)
+        Text(
+            text = stringResource(R.string.step_track_in_cm),
+            modifier = Modifier.padding(start = 8.dp),
+        )
+    }
+}
+
+/** Millimeters as the centimeter text the user edits, e.g. 25 -> "2.5". */
+private fun mmToText(mm: Int): String =
+    if (mm % MM_PER_CM == 0) "${mm / MM_PER_CM}" else "${mm / MM_PER_CM}.${mm % MM_PER_CM}"
+
+/** The millimeters of a centimeter text such as "2.5", or null when it is not a number. */
+private fun textToMm(text: String): Int? =
+    text.toBigDecimalOrNull()?.movePointRight(1)?.toInt()
+
+/** Like [NumberField], but accepts one decimal place, for lengths in centimeters. */
+@Composable
+private fun DecimalField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    @StringRes labelRes: Int,
+    modifier: Modifier = Modifier
+        .fillMaxWidth()
+        .padding(top = 12.dp),
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { input ->
+            // A comma is accepted as the decimal separator; at most one decimal place is kept.
+            val text = input.filter { it.isDigit() || it == '.' || it == ',' }.replace(',', '.')
+            val whole = text.substringBefore('.').take(4)
+            val fraction = text.substringAfter('.', "").filter(Char::isDigit).take(1)
+            onValueChange(if ('.' in text) "$whole.$fraction" else whole)
+        },
+        label = { Text(stringResource(labelRes)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = modifier,
+    )
 }
 
 @Composable
