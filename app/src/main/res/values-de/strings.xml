@@ -68,10 +68,15 @@
     <string name="step_type_special">Spezial</string>
     <string name="step_description_optional">Beschreibung (optional)</string>
     <string name="step_done">Erledigt</string>
-    <string name="step_not_done">Noch nicht erledigt</string>
-    <string name="mark_done">Als erledigt markieren</string>
+    <string name="step_not_done">Nicht erledigt</string>
+    <string name="mark_done">Erledigt</string>
     <string name="undo">Rückgängig</string>
     <string name="step_stitch_count">Maschenzahl</string>
+    <string name="detail_method">Methode</string>
+    <string name="detail_needle_size">Nadelstärke</string>
+    <string name="detail_shaping_pattern">Muster</string>
+    <string name="detail_target_count">Anzahl</string>
+    <string name="detail_target_length">Länge</string>
     <string name="step_method_optional">Methode (optional)</string>
     <string name="step_color_optional">Farbe (optional)</string>
     <string name="step_needle_size_optional">Nadelstärke (optional)</string>
@@ -86,7 +91,7 @@
     <string name="step_pattern_type">Mustertyp</string>
     <string name="pattern_type_cables">Zopfmuster</string>
     <string name="pattern_type_colorwork">Farbmuster</string>
-    <string name="step_row_pattern">Maschenmuster</string>
+    <string name="step_row_pattern">Muster</string>
     <string name="row_pattern_all_knit">Alle rechts</string>
     <string name="row_pattern_all_purl">Alle links</string>
     <string name="row_pattern_ribbing_1x1">1 re, 1 li</string>

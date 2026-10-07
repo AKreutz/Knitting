@@ -67,10 +67,15 @@
     <string name="step_type_special">Special</string>
     <string name="step_description_optional">Description (optional)</string>
     <string name="step_done">Done</string>
-    <string name="step_not_done">Not done yet</string>
-    <string name="mark_done">Mark done</string>
+    <string name="step_not_done">Not done</string>
+    <string name="mark_done">Done</string>
     <string name="undo">Undo</string>
     <string name="step_stitch_count">Stitch count</string>
+    <string name="detail_method">Method</string>
+    <string name="detail_needle_size">Needle size</string>
+    <string name="detail_shaping_pattern">Pattern</string>
+    <string name="detail_target_count">Count</string>
+    <string name="detail_target_length">Length</string>
     <string name="step_method_optional">Method (optional)</string>
     <string name="step_color_optional">Color (optional)</string>
     <string name="step_needle_size_optional">Needle size (optional)</string>
@@ -85,7 +90,7 @@
     <string name="step_pattern_type">Pattern type</string>
     <string name="pattern_type_cables">Cables</string>
     <string name="pattern_type_colorwork">Colorwork</string>
-    <string name="step_row_pattern">Stitch pattern</string>
+    <string name="step_row_pattern">Pattern</string>
     <string name="row_pattern_all_knit">All knit</string>
     <string name="row_pattern_all_purl">All purl</string>
     <string name="row_pattern_ribbing_1x1">1K1P</string>

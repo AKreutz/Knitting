@@ -3,30 +3,24 @@ package com.akreutz.knitting.ui.projects
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -50,11 +44,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.akreutz.knitting.R
@@ -214,104 +213,140 @@ internal fun ProjectCard(
     steps: List<Step> = emptyList(),
     onStartClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
-    onStepProgressChange: ((Step, Int) -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
     onCopyGrid: ((target: Step, source: Step) -> Unit)? = null,
 ) {
     Card(modifier = modifier.fillMaxWidth(), shape = MaterialTheme.shapes.medium) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // The strip's color mirrors the status chip so a card's progress reads at a glance.
-            Box(
-                modifier = Modifier
-                    .width(Spacing.accentStrip)
-                    .fillMaxHeight()
-                    .background(project.status.accentColor()),
-            )
-            Column(modifier = Modifier.weight(1f).padding(Spacing.lg)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = project.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.weight(1f),
-                    )
-                    if (onEditClick != null && project.status != ProjectStatus.Finished) {
-                        IconButton(onClick = onEditClick) {
-                            Icon(
-                                Icons.Filled.Edit,
-                                contentDescription = stringResource(R.string.edit_project_title),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
-                    StatusChip(status = project.status)
+        // The strip's color mirrors the status chip so a card's progress reads at a glance. It is
+        // drawn behind the content rather than measured, so it follows the card while it animates.
+        val accentColor = project.status.accentColor()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawRect(accentColor, size = Size(Spacing.accentStrip.toPx(), size.height))
                 }
-                project.description?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = Spacing.xs),
-                    )
-                }
-                MetaLine(project)
-                if (steps.isNotEmpty()) {
-                    var expanded by rememberSaveable(project.id) { mutableStateOf(false) }
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        modifier = Modifier.padding(top = Spacing.md),
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { expanded = !expanded }
-                            .padding(vertical = Spacing.sm),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = pluralStringResource(R.plurals.steps_count, steps.size, steps.size),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.weight(1f),
-                        )
+                .padding(start = Spacing.accentStrip + Spacing.lg, top = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = project.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onEditClick != null && project.status != ProjectStatus.Finished) {
+                    IconButton(onClick = onEditClick) {
                         Icon(
-                            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-                            contentDescription = stringResource(
-                                if (expanded) R.string.collapse_step else R.string.expand_step,
-                            ),
+                            Icons.Filled.Edit,
+                            contentDescription = stringResource(R.string.edit_project_title),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    AnimatedVisibility(visible = expanded) {
-                        Column {
-                            steps.forEach { step ->
-                                StepRow(
-                                    step = step,
-                                    inProgress = project.status == ProjectStatus.InProgress,
-                                    onProgressChange = onStepProgressChange,
-                                    onPatternCellsChange = onPatternCellsChange,
-                                    gridEditable = true,
-                                    copyGridSources = steps.filter { it.id != step.id && it.hasGrid() },
-                                    onCopyGrid = onCopyGrid,
-                                    modifier = Modifier.padding(top = Spacing.sm),
-                                )
-                            }
+                }
+                StatusChip(status = project.status)
+            }
+            project.description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = Spacing.xs),
+                )
+            }
+            MetaLine(project)
+            if (steps.isNotEmpty()) {
+                var expanded by rememberSaveable(project.id) { mutableStateOf(false) }
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(top = Spacing.md),
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { expanded = !expanded }
+                        .padding(vertical = Spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    StepTypeStrip(steps, modifier = Modifier.weight(1f))
+                    Text(
+                        text = pluralStringResource(R.plurals.steps_count, steps.size, steps.size),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(start = Spacing.sm),
+                    )
+                    ExpandChevron(expanded)
+                }
+                AnimatedVisibility(visible = expanded) {
+                    // Hung off a trunk line that starts at the summary line's left edge, like a file tree.
+                    Column {
+                        steps.forEachIndexed { index, step ->
+                            StepRow(
+                                step = step,
+                                // Counting happens on the in-progress screen, not here.
+                                inProgress = false,
+                                onProgressChange = null,
+                                onPatternCellsChange = onPatternCellsChange,
+                                gridEditable = true,
+                                copyGridSources = steps.filter { it.id != step.id && it.hasGrid() },
+                                onCopyGrid = onCopyGrid,
+                                branch = stepBranchAt(index, steps.size),
+                            )
                         }
                     }
                 }
-                if (onStartClick != null && project.status == ProjectStatus.Created) {
-                    Button(
-                        onClick = onStartClick,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.secondary,
-                            contentColor = MaterialTheme.colorScheme.onSecondary,
-                        ),
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
-                    ) {
-                        Text(stringResource(R.string.start_project_action))
-                    }
+            }
+            if (onStartClick != null && project.status == ProjectStatus.Created) {
+                Button(
+                    onClick = onStartClick,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.secondary,
+                        contentColor = MaterialTheme.colorScheme.onSecondary,
+                    ),
+                    modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
+                ) {
+                    Text(stringResource(R.string.start_project_action))
                 }
+            }
+        }
+    }
+}
+
+/**
+ * The type icons of [steps] in order, as many as the available width holds. When they do not all
+ * fit, room is kept at the end for a "+N" with the number of steps left out.
+ */
+@Composable
+private fun StepTypeStrip(steps: List<Step>, modifier: Modifier = Modifier) {
+    val iconSize = 24.dp
+    val gap = Spacing.sm
+    val labelStyle = MaterialTheme.typography.labelLarge
+    val textMeasurer = rememberTextMeasurer()
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier = modifier) {
+        // Width of [count] icons followed by the "+N" for the rest, with a gap between each item.
+        fun widthWithLabel(count: Int): Dp {
+            val label = with(density) { textMeasurer.measure("+${steps.size - count}", labelStyle).size.width.toDp() }
+            return (iconSize + gap) * count + label
+        }
+        val allFit = (iconSize + gap) * steps.size - gap <= maxWidth
+        val shown = if (allFit) {
+            steps.size
+        } else {
+            (steps.size - 1 downTo 1).firstOrNull { widthWithLabel(it) <= maxWidth } ?: 0
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(gap),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            steps.take(shown).forEach { DuotoneIcon(it.type.icon(), iconSize = iconSize) }
+            if (shown < steps.size) {
+                Text(
+                    text = "+${steps.size - shown}",
+                    style = labelStyle,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
