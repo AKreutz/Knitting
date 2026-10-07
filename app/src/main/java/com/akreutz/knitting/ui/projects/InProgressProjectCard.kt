@@ -43,6 +43,7 @@ import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.weightedProgress
 import com.akreutz.knitting.ui.theme.Spacing
 import java.util.concurrent.TimeUnit
 
@@ -103,9 +104,10 @@ internal fun InProgressProjectCard(
                         modifier = Modifier.padding(top = Spacing.xs),
                     )
                 }
-                if (countable.isNotEmpty()) {
+                val overallProgress = steps.weightedProgress()
+                if (countable.isNotEmpty() && overallProgress != null) {
                     LinearProgressIndicator(
-                        progress = { doneCount / countable.size.toFloat() },
+                        progress = { overallProgress },
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
                         drawStopIndicator = {},

@@ -79,3 +79,45 @@ fun Step.progressTarget(): Int? = when (type) {
     // A special step is checked off: 0 = open, 1 = done.
     StepType.Special -> 1
 }
+
+/** Typical stockinette gauge (30 rows per 10 cm), used to compare length-tracked steps with row-counted ones. */
+const val DEFAULT_ROWS_PER_CM = 3
+
+/**
+ * How much work this step is relative to others, in row-equivalents, or null for steps without a counter.
+ * Cast-on and special steps count as one row; shaping counts one row per increase or decrease.
+ */
+fun Step.workWeight(): Float? {
+    val target = progressTarget() ?: return null
+    return when (type) {
+        StepType.CastOn, StepType.Special -> 1f
+        StepType.Increases, StepType.Decreases -> target.toFloat()
+        StepType.PlainRows -> if (trackInCm) mmToRows(target) else target.toFloat()
+        StepType.Pattern -> if (trackInCm) mmToRows(target) else target * (patternRows ?: 1).toFloat()
+    }.coerceAtLeast(1f)
+}
+
+/** The share of this step already done, from 0 to 1, or null for steps without a counter. A pattern step includes its partial repeat. */
+fun Step.completedFraction(): Float? {
+    val target = progressTarget()?.takeIf { it > 0 } ?: return null
+    if (type == StepType.Pattern && !trackInCm) {
+        val rows = (patternRows ?: 1).coerceAtLeast(1)
+        return ((progress * rows + patternRow).toFloat() / (target * rows)).coerceIn(0f, 1f)
+    }
+    return (progress.toFloat() / target).coerceIn(0f, 1f)
+}
+
+private fun mmToRows(mm: Int): Float = mm.toFloat() / MM_PER_CM * DEFAULT_ROWS_PER_CM
+
+/** Overall progress from 0 to 1, weighting each counted step by how much work it is; null when no step has a counter. */
+fun List<Step>.weightedProgress(): Float? {
+    var total = 0f
+    var done = 0f
+    for (step in this) {
+        val weight = step.workWeight() ?: continue
+        val fraction = step.completedFraction() ?: continue
+        total += weight
+        done += weight * fraction
+    }
+    return if (total > 0f) done / total else null
+}
