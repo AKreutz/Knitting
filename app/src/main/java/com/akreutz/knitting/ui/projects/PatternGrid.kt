@@ -1,5 +1,10 @@
 package com.akreutz.knitting.ui.projects
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,7 +41,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
@@ -52,6 +56,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -68,8 +73,13 @@ private val PatternPalette = listOf(
     Color(0xFFB5493B),
     Color(0xFFE0A526),
     Color(0xFF6E8B5B),
-    Color(0xFF3F5A7A),
 )
+
+/** How opaque the grid's lines are; they should guide the eye without competing with the cells. */
+private const val GridLineAlpha = 0.6f
+
+/** Size of the dots showing which colors a saved grid uses. */
+private val UsedColorDotSize = 18.dp
 
 /** Laid over the cells of completed colorwork rows so they read as done while keeping their colors. */
 private val CompletedRowCover = Color.Black.copy(alpha = 0.5f)
@@ -340,11 +350,13 @@ internal fun PatternGrid(
         // The width is measured with onSizeChanged rather than BoxWithConstraints, because the
         // project card asks its content for intrinsic sizes, which subcomposition can't answer.
         Box(modifier = Modifier.fillMaxWidth().onSizeChanged { availableWidthPx = it.width }) {
-            val gridColor = MaterialTheme.colorScheme.outlineVariant
+            // Soft lines, so the grid reads as a picture first and a chart second.
+            val gridColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = GridLineAlpha)
             val emptyColor = MaterialTheme.colorScheme.surface
             // The card's own text color, the slightly brown one the project name uses.
             val stitchColor = LocalContentColor.current
-            val markerColor = MaterialTheme.colorScheme.onSurfaceVariant
+            val markerColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = GridLineAlpha)
+            val gridShape = MaterialTheme.shapes.extraSmall
 
             // Zooms around the pinch centroid so the cell under the fingers stays put.
             val transform by rememberUpdatedState { centroid: Offset, panChange: Offset, zoomChange: Float ->
@@ -396,8 +408,9 @@ internal fun PatternGrid(
                         Canvas(
                             modifier = Modifier
                                 .size(with(density) { viewWidth.toDp() }, with(density) { viewHeight.toDp() })
-                                // Canvas doesn't clip on its own, so cells at the edge would spill out of the viewport.
-                                .clipToBounds()
+                                // Canvas doesn't clip on its own, so cells at the edge would spill out of the
+                                // viewport; clipping to a rounded shape also softens the grid's corners.
+                                .clip(gridShape)
                                 .then(
                                     if (saved) {
                                         // No pointer input at all, so swipes fall through to the list.
@@ -543,56 +556,21 @@ internal fun PatternGrid(
         }
         if (editable) Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            ToolSwatch(
-                enabled = !saved,
-                selected = selectedTool == PAN_TOOL,
-                background = MaterialTheme.colorScheme.surfaceVariant,
-                label = stringResource(R.string.pattern_pan),
-                onClick = { selectedTool = PAN_TOOL },
-            ) {
-                Icon(
-                    Icons.Filled.OpenWith,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(18.dp),
-                )
+            // Styled like the status chip on the card: outlined for Edit, filled for Save. Both labels
+            // get the width of the longer one, so the button does not change size when it switches.
+            val editLabel = stringResource(R.string.pattern_edit)
+            val saveLabel = stringResource(R.string.pattern_save)
+            val buttonTextStyle = MaterialTheme.typography.labelLarge
+            val buttonTextWidth = with(density) {
+                maxOf(
+                    textMeasurer.measure(editLabel, buttonTextStyle).size.width,
+                    textMeasurer.measure(saveLabel, buttonTextStyle).size.width,
+                ).toDp()
             }
-            if (cables) {
-                // Cable charts are painted with stitch symbols instead of colors.
-                CableStitchLabels.forEachIndexed { index, labelRes ->
-                    val stitchColor = LocalContentColor.current
-                    ToolSwatch(
-                        enabled = !saved,
-                        selected = selectedTool == index,
-                        background = MaterialTheme.colorScheme.surface,
-                        label = stringResource(labelRes),
-                        onClick = { selectedTool = index },
-                    ) {
-                        Canvas(Modifier.size(24.dp)) { drawStitch(index, Offset.Zero, this.size.width, stitchColor) }
-                    }
-                }
-            } else {
-                PatternPalette.forEachIndexed { index, color ->
-                    val label = if (index == 0) {
-                        stringResource(R.string.pattern_erase)
-                    } else {
-                        stringResource(R.string.pattern_color, index)
-                    }
-                    ToolSwatch(
-                        enabled = !saved,
-                        selected = selectedTool == index,
-                        background = color ?: MaterialTheme.colorScheme.surface,
-                        label = label,
-                        onClick = { selectedTool = index },
-                    )
-                }
-            }
-            Spacer(Modifier.weight(1f))
-            // Styled like the status chip on the card: outlined for Edit, filled for Save.
             Surface(
+                modifier = Modifier.width(buttonTextWidth + Spacing.md * 2),
                 onClick = {
                     if (saved) {
                         startEditing()
@@ -607,10 +585,95 @@ internal fun PatternGrid(
                 border = if (saved) BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant) else null,
             ) {
                 Text(
-                    text = stringResource(if (saved) R.string.pattern_edit else R.string.pattern_save),
-                    style = MaterialTheme.typography.labelLarge,
+                    text = if (saved) editLabel else saveLabel,
+                    style = buttonTextStyle,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = Spacing.md, vertical = 6.dp),
                 )
+            }
+            // The tools only show while editing; a saved grid is just a picture with an Edit button.
+            AnimatedVisibility(
+                visible = !saved,
+                // Reveal from the left edge, so the tools appear in reading order after the Edit button.
+                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start),
+            ) {
+                // The gap to the Edit button is padding inside, so it grows with the tools.
+                Row(
+                    modifier = Modifier.padding(start = Spacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ToolSwatch(
+                        selected = selectedTool == PAN_TOOL,
+                        background = MaterialTheme.colorScheme.surfaceVariant,
+                        label = stringResource(R.string.pattern_pan),
+                        onClick = { selectedTool = PAN_TOOL },
+                    ) {
+                        Icon(
+                            Icons.Filled.OpenWith,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                    if (cables) {
+                        // Cable charts are painted with stitch symbols instead of colors.
+                        CableStitchLabels.forEachIndexed { index, labelRes ->
+                            val stitchColor = LocalContentColor.current
+                            ToolSwatch(
+                                selected = selectedTool == index,
+                                background = MaterialTheme.colorScheme.surface,
+                                label = stringResource(labelRes),
+                                onClick = { selectedTool = index },
+                            ) {
+                                Canvas(Modifier.size(24.dp)) { drawStitch(index, Offset.Zero, this.size.width, stitchColor) }
+                            }
+                        }
+                    } else {
+                        PatternPalette.forEachIndexed { index, color ->
+                            val label = if (index == 0) {
+                                stringResource(R.string.pattern_erase)
+                            } else {
+                                stringResource(R.string.pattern_color, index)
+                            }
+                            ToolSwatch(
+                                selected = selectedTool == index,
+                                background = color ?: MaterialTheme.colorScheme.surface,
+                                label = label,
+                                onClick = { selectedTool = index },
+                            )
+                        }
+                    }
+                }
+            }
+            // A saved colorwork grid shows which colors it uses, in place of the tools.
+            val usedColors = remember(cells) {
+                PatternPalette.withIndex().filter { (index, color) -> index > 0 && color != null && '0' + index in cells }
+            }
+            AnimatedVisibility(
+                visible = saved && !cables && usedColors.isNotEmpty(),
+                enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start),
+            ) {
+                Row(
+                    modifier = Modifier.padding(start = Spacing.sm),
+                    horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val outline = MaterialTheme.colorScheme.outline
+                    val dotLabels = usedColors.map { stringResource(R.string.pattern_color, it.index) }
+                    usedColors.forEachIndexed { position, (_, color) ->
+                        Box(
+                            modifier = Modifier
+                                .size(UsedColorDotSize)
+                                .clip(CircleShape)
+                                .background(color!!)
+                                .border(1.dp, outline, CircleShape)
+                                .semantics { contentDescription = dotLabels[position] },
+                        )
+                    }
+                }
             }
         }
         if (editable && !saved) editActions?.invoke()
@@ -619,7 +682,6 @@ internal fun PatternGrid(
 
 @Composable
 private fun ToolSwatch(
-    enabled: Boolean,
     selected: Boolean,
     background: Color,
     label: String,
@@ -629,7 +691,6 @@ private fun ToolSwatch(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .alpha(if (enabled) 1f else 0.38f)
             .size(32.dp)
             .clip(CircleShape)
             .background(background)
@@ -642,7 +703,7 @@ private fun ToolSwatch(
                 shape = CircleShape,
             )
             .semantics { contentDescription = label }
-            .clickable(enabled = enabled, onClick = onClick),
+            .clickable(onClick = onClick),
     ) {
         content()
     }
