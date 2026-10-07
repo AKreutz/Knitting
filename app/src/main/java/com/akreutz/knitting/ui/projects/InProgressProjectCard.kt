@@ -5,27 +5,22 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Celebration
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalButton
@@ -44,6 +39,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -86,89 +83,89 @@ internal fun InProgressProjectCard(
         modifier = modifier.fillMaxWidth(),
         shape = shape,
     ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // Same status-colored strip as the basic project card.
-            Box(
-                modifier = Modifier
-                    .width(Spacing.accentStrip)
-                    .fillMaxHeight()
-                    .background(project.status.accentColor()),
-            )
-            Column(modifier = Modifier.weight(1f).padding(Spacing.lg)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = project.name, style = MaterialTheme.typography.titleLarge)
-                        dayCount(project)?.let {
-                            Text(
-                                text = it,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
+        // Same status-colored strip as the basic project card, drawn behind the content so it follows the card while it animates.
+        val accentColor = project.status.accentColor()
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .drawBehind {
+                    drawRect(accentColor, size = Size(Spacing.accentStrip.toPx(), size.height))
+                }
+                .padding(start = Spacing.accentStrip + Spacing.lg, top = Spacing.lg, end = Spacing.lg, bottom = Spacing.lg),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(text = project.name, style = MaterialTheme.typography.titleLarge)
+                    dayCount(project)?.let {
+                        Text(
+                            text = it,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.secondary,
+                        )
                     }
                 }
-                project.description?.let {
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Spacing.xs),
-                    )
-                }
-                val overallProgress = steps.weightedProgress()
-                if (countable.isNotEmpty() && overallProgress != null) {
-                    val animatedOverall by animateFloatAsState(overallProgress, label = "overall progress")
-                    LinearProgressIndicator(
-                        progress = { animatedOverall },
-                        color = MaterialTheme.colorScheme.secondary,
-                        modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
-                        drawStopIndicator = {},
-                        gapSize = 0.dp,
-                    )
-                    Text(
-                        text = stringResource(R.string.steps_done_summary, doneCount, countable.size),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = Spacing.xs),
-                    )
-                }
-                CollapsibleSteps(
-                    titleRes = R.string.previous_steps,
-                    steps = previous,
-                    stateKey = "${project.id}-previous",
-                    onProgressChange = onStepProgressChange,
-                    onPatternCellsChange = onPatternCellsChange,
+            }
+            project.description?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs),
                 )
-                if (steps.isNotEmpty()) {
-                    CurrentStepPanel(
-                        currentStep = current,
-                        onProgressChange = onStepProgressChange,
-                        onPatternCellsChange = onPatternCellsChange,
-                        onPatternRowStep = onPatternRowStep,
-                        modifier = Modifier.padding(top = Spacing.md),
-                    )
-                }
-                CollapsibleSteps(
-                    titleRes = R.string.next_steps,
-                    steps = next,
-                    stateKey = "${project.id}-next",
-                    onProgressChange = onStepProgressChange,
-                    onPatternCellsChange = onPatternCellsChange,
-                )
-                Row(
+            }
+            val overallProgress = steps.weightedProgress()
+            if (countable.isNotEmpty() && overallProgress != null) {
+                val animatedOverall by animateFloatAsState(overallProgress, label = "overall progress")
+                LinearProgressIndicator(
+                    progress = { animatedOverall },
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
-                    horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+                    drawStopIndicator = {},
+                    gapSize = 0.dp,
+                )
+                Text(
+                    text = stringResource(R.string.steps_done_summary, doneCount, countable.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = Spacing.xs),
+                )
+            }
+            CollapsibleSteps(
+                titleRes = R.string.previous_steps,
+                steps = previous,
+                stateKey = "${project.id}-previous",
+                onProgressChange = onStepProgressChange,
+                onPatternCellsChange = onPatternCellsChange,
+            )
+            if (steps.isNotEmpty()) {
+                CurrentStepPanel(
+                    currentStep = current,
+                    onProgressChange = onStepProgressChange,
+                    onPatternCellsChange = onPatternCellsChange,
+                    onPatternRowStep = onPatternRowStep,
+                    modifier = Modifier.padding(top = Spacing.md),
+                )
+            }
+            CollapsibleSteps(
+                titleRes = R.string.next_steps,
+                steps = next,
+                stateKey = "${project.id}-next",
+                onProgressChange = onStepProgressChange,
+                onPatternCellsChange = onPatternCellsChange,
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                OutlinedButton(onClick = { onResetClick?.invoke() }, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.reset))
+                }
+                Button(
+                    onClick = { onFinishClick?.invoke() },
+                    enabled = doneCount == countable.size,
+                    modifier = Modifier.weight(1f),
                 ) {
-                    OutlinedButton(onClick = { onResetClick?.invoke() }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.reset))
-                    }
-                    Button(
-                        onClick = { onFinishClick?.invoke() },
-                        enabled = doneCount == countable.size,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        Text(stringResource(R.string.finish))
-                    }
+                    Text(stringResource(R.string.finish))
                 }
             }
         }
@@ -216,18 +213,35 @@ private fun CurrentStepPanel(
                 return@Column
             }
             val step = shown
-            Text(
-                text = stringResource(R.string.current_step).uppercase(),
-                style = MaterialTheme.typography.labelSmall,
-            )
-            Text(
-                text = "${step.name} · ${stringResource(step.type.labelRes())}",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            // A known yarn color is shown as a yarn ball beside the heading, any other is written in the details.
+            val shade = step.color?.let { yarnColorOrNull(it) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // The ball is centered across both lines of the heading: the label and the step's name.
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.current_step).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                    Text(
+                        text = "${step.name} · ${stringResource(step.type.labelRes())}",
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
+                if (step.color != null && shade != null) {
+                    // Cream behind the ball, so its outline and needles stand out from the panel's green.
+                    YarnBall(
+                        shade,
+                        description = step.color,
+                        modifier = Modifier
+                            .padding(start = Spacing.sm)
+                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(10.dp))
+                            .padding(4.dp),
+                    )
+                }
+            }
             val details = listOfNotNull(
                 step.rowPattern?.let { stringResource(it.labelRes()) },
-                step.details().ifEmpty { null },
+                step.details(withColor = shade == null).ifEmpty { null },
             ).joinToString(" · ")
             if (details.isNotEmpty()) {
                 Text(text = details, style = MaterialTheme.typography.bodySmall)
@@ -303,7 +317,7 @@ private fun PatternRowCounter(
             },
             enabled = step.trackInCm || step.progress > 0 || step.patternRow > 0,
         ) {
-            Text(stringResource(R.string.remove_count, "1"))
+            CounterButtonLabel(stringResource(R.string.remove_count, "1"))
         }
         FilledTonalButton(
             onClick = {
@@ -316,7 +330,7 @@ private fun PatternRowCounter(
             enabled = step.trackInCm || step.progress < repeats,
             modifier = Modifier.padding(start = Spacing.sm),
         ) {
-            Text(stringResource(R.string.add_count, "1"))
+            CounterButtonLabel(stringResource(R.string.add_count, "1"))
         }
     }
 }
@@ -343,13 +357,14 @@ private fun CollapsibleSteps(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Icon(
-            imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
-            contentDescription = stringResource(if (expanded) R.string.collapse_step else R.string.expand_step),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        ExpandChevron(expanded)
     }
-    AnimatedVisibility(visible = expanded) {
+    // Explicit, because outside a Column scope the default would expand diagonally from the corner.
+    AnimatedVisibility(
+        visible = expanded,
+        enter = fadeIn() + expandVertically(),
+        exit = fadeOut() + shrinkVertically(),
+    ) {
         Column {
             steps.forEach { step ->
                 StepRow(
