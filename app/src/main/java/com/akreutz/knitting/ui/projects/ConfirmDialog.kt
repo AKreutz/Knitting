@@ -3,12 +3,8 @@ package com.akreutz.knitting.ui.projects
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -31,10 +27,7 @@ fun rememberPopInScale(): Float {
     return scale.value
 }
 
-/**
- * A confirmation with an [icon] that pops in. A [destructive] action is drawn in the error color
- * and as a filled button, so it stands out from the cancel action.
- */
+/** A confirmation with an [icon], drawn in the app's two colors, that pops in. */
 @Composable
 fun ConfirmDialog(
     icon: ImageVector,
@@ -43,42 +36,18 @@ fun ConfirmDialog(
     confirmLabel: String,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
-    destructive: Boolean = false,
-    /** Draws the icon in the app's two colors instead of a single tint. */
-    duotone: Boolean = false,
 ) {
     val scale = rememberPopInScale()
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = {
-            if (duotone) {
-                DuotoneIcon(imageVector = icon, iconSize = 32.dp, modifier = Modifier.scale(scale))
-            } else {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = if (destructive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .size(32.dp)
-                        .scale(scale),
-                )
-            }
+            DuotoneIcon(imageVector = icon, iconSize = 32.dp, modifier = Modifier.scale(scale))
         },
         title = { Text(title) },
         text = { Text(message) },
         confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = if (destructive) {
-                    ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                        contentColor = MaterialTheme.colorScheme.onError,
-                    )
-                } else {
-                    ButtonDefaults.buttonColors()
-                },
-            ) {
+            Button(onClick = onConfirm) {
                 Text(confirmLabel)
             }
         },

@@ -17,7 +17,6 @@ fun ResetProjectDialog(
         title = stringResource(R.string.reset_project_title),
         message = stringResource(R.string.reset_project_message, projectName),
         confirmLabel = stringResource(R.string.reset),
-        destructive = true,
         onDismiss = onDismiss,
         onConfirm = onConfirm,
     )

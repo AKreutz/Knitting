@@ -17,8 +17,6 @@ fun DeleteProjectDialog(
         title = stringResource(R.string.delete_project_title),
         message = stringResource(R.string.delete_project_message, projectName),
         confirmLabel = stringResource(R.string.delete),
-        destructive = true,
-        duotone = true,
         onDismiss = onDismiss,
         onConfirm = onConfirm,
     )
