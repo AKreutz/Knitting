@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The outline of the yarn ball in ic_yarn_ball, drawn over its strand lines. Shares its canvas with the needle drawables. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="260"
+    android:viewportHeight="260">
+  <group
+      android:translateX="30"
+      android:translateY="1.5">
+    <path
+        android:pathData="M8.3,144.5a77.5,77.5 0 1,0 155,0a77.5,77.5 0 1,0 -155,0z"
+        android:strokeColor="#000000"
+        android:strokeWidth="13" />
+  </group>
+</vector>

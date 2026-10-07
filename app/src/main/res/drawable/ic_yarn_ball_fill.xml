@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A plain disc the size of the yarn ball in ic_yarn_ball, to be tinted with the yarn color. Shares its canvas with the needle drawables. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="30dp"
+    android:height="30dp"
+    android:viewportWidth="260"
+    android:viewportHeight="260">
+  <group
+      android:translateX="30"
+      android:translateY="1.5">
+    <path
+        android:fillColor="#000000"
+        android:pathData="M4.3,144.5a81.5,81.5 0 1,0 163,0a81.5,81.5 0 1,0 -163,0z" />
+  </group>
+</vector>
