@@ -1,7 +1,15 @@
 package com.akreutz.knitting.ui.projects
 
 import androidx.annotation.PluralsRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +36,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -229,6 +239,10 @@ private fun summaryText(step: Step): String? {
     }
 }
 
+/** A changing count slides up into place while the old value fades out. */
+internal fun <S> AnimatedContentTransitionScope<S>.countTransition(): ContentTransform =
+    (slideInVertically(tween(200)) { it / 2 } + fadeIn(tween(200))) togetherWith fadeOut(tween(100))
+
 @Composable
 internal fun StepCounter(
     step: Step,
@@ -236,19 +250,33 @@ internal fun StepCounter(
     modifier: Modifier = Modifier,
 ) {
     val target = step.progressTarget() ?: return
+    val haptics = LocalHapticFeedback.current
+    // A light tick for every count, a firmer confirmation when a count reaches its target.
+    fun change(newProgress: Int) {
+        haptics.performHapticFeedback(
+            if (newProgress >= target) HapticFeedbackType.Confirm else HapticFeedbackType.SegmentTick,
+        )
+        onProgressChange?.invoke(step, newProgress)
+    }
     if (step.type == StepType.Special) {
         val done = step.progress >= target
         Row(
             modifier = modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(if (done) R.string.step_done else R.string.step_not_done),
-                style = MaterialTheme.typography.titleMedium,
+            AnimatedContent(
+                targetState = done,
+                transitionSpec = { countTransition() },
+                label = "step done",
                 modifier = Modifier.weight(1f),
-            )
+            ) { isDone ->
+                Text(
+                    text = stringResource(if (isDone) R.string.step_done else R.string.step_not_done),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
             if (onProgressChange != null) {
-                FilledTonalButton(onClick = { onProgressChange(step, if (done) 0 else target) }) {
+                FilledTonalButton(onClick = { change(if (done) 0 else target) }) {
                     Text(stringResource(if (done) R.string.undo else R.string.mark_done))
                 }
             }
@@ -264,24 +292,27 @@ internal fun StepCounter(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(
+        AnimatedContent(
+            targetState = stringResource(
                 R.string.step_progress,
                 if (step.trackInCm) formatCm(step.progress) else step.progress.toString(),
                 step.amountText(target),
             ),
-            style = MaterialTheme.typography.titleMedium,
+            transitionSpec = { countTransition() },
+            label = "step progress",
             modifier = Modifier.weight(1f),
-        )
+        ) { text ->
+            Text(text = text, style = MaterialTheme.typography.titleMedium)
+        }
         if (onProgressChange != null) {
             FilledTonalButton(
-                onClick = { onProgressChange(step, step.progress - decrement) },
+                onClick = { change(step.progress - decrement) },
                 enabled = step.progress > 0,
             ) {
                 Text(stringResource(R.string.remove_count, label(decrement)))
             }
             FilledTonalButton(
-                onClick = { onProgressChange(step, step.progress + increment) },
+                onClick = { change(step.progress + increment) },
                 enabled = step.progress < target,
                 modifier = Modifier.padding(start = Spacing.sm),
             ) {

@@ -1,7 +1,14 @@
 package com.akreutz.knitting.ui.projects
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -16,6 +23,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Button
@@ -36,6 +44,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
@@ -106,8 +117,9 @@ internal fun InProgressProjectCard(
                 }
                 val overallProgress = steps.weightedProgress()
                 if (countable.isNotEmpty() && overallProgress != null) {
+                    val animatedOverall by animateFloatAsState(overallProgress, label = "overall progress")
                     LinearProgressIndicator(
-                        progress = { overallProgress },
+                        progress = { animatedOverall },
                         color = MaterialTheme.colorScheme.secondary,
                         modifier = Modifier.fillMaxWidth().padding(top = Spacing.md),
                         drawStopIndicator = {},
@@ -129,7 +141,7 @@ internal fun InProgressProjectCard(
                 )
                 if (steps.isNotEmpty()) {
                     CurrentStepPanel(
-                        step = current,
+                        currentStep = current,
                         onProgressChange = onStepProgressChange,
                         onPatternCellsChange = onPatternCellsChange,
                         onPatternRowStep = onPatternRowStep,
@@ -165,7 +177,7 @@ internal fun InProgressProjectCard(
 
 @Composable
 private fun CurrentStepPanel(
-    step: Step?,
+    currentStep: Step?,
     onProgressChange: ((Step, Int) -> Unit)?,
     onPatternCellsChange: ((Step, String) -> Unit)?,
     onPatternRowStep: ((Step, Int) -> Unit)?,
@@ -177,14 +189,33 @@ private fun CurrentStepPanel(
         color = MaterialTheme.colorScheme.secondary,
         contentColor = MaterialTheme.colorScheme.onSecondary,
     ) {
+        // Moving on to the next step swaps the panel's content with a short scale-and-fade; counting within a step does not.
+        AnimatedContent(
+            targetState = currentStep,
+            contentKey = { it?.id },
+            transitionSpec = {
+                (fadeIn(tween(300, delayMillis = 100)) + scaleIn(tween(300, delayMillis = 100), initialScale = 0.92f)) togetherWith
+                    fadeOut(tween(100))
+            },
+            label = "current step",
+        ) { shown ->
         Column(modifier = Modifier.padding(Spacing.md)) {
-            if (step == null) {
-                Text(
-                    text = stringResource(R.string.all_steps_done),
-                    style = MaterialTheme.typography.titleMedium,
-                )
+            if (shown == null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Filled.Celebration,
+                        contentDescription = null,
+                        modifier = Modifier.scale(rememberPopInScale()),
+                    )
+                    Text(
+                        text = stringResource(R.string.all_steps_done),
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(start = Spacing.sm),
+                    )
+                }
                 return@Column
             }
+            val step = shown
             Text(
                 text = stringResource(R.string.current_step).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -204,8 +235,12 @@ private fun CurrentStepPanel(
             val target = step.progressTarget()
             if (target != null) {
                 // A single check-off has nothing to show a bar for.
+                val animatedProgress by animateFloatAsState(
+                    targetValue = (step.progress / target.toFloat()).coerceIn(0f, 1f),
+                    label = "step progress bar",
+                )
                 if (step.type != StepType.Special) LinearProgressIndicator(
-                    progress = { (step.progress / target.toFloat()).coerceIn(0f, 1f) },
+                    progress = { animatedProgress },
                     color = MaterialTheme.colorScheme.onSecondary,
                     trackColor = MaterialTheme.colorScheme.onSecondary.copy(alpha = 0.3f),
                     modifier = Modifier.fillMaxWidth().padding(top = Spacing.sm),
@@ -236,6 +271,7 @@ private fun CurrentStepPanel(
                 PatternRowCounter(step, rows, target, onPatternRowStep)
             }
         }
+        }
     }
 }
 
@@ -247,23 +283,36 @@ private fun PatternRowCounter(
     repeats: Int,
     onRowStep: (Step, Int) -> Unit,
 ) {
+    val haptics = LocalHapticFeedback.current
     Row(
         modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            text = stringResource(R.string.pattern_row_progress, step.patternRow, rows),
-            style = MaterialTheme.typography.titleMedium,
+        AnimatedContent(
+            targetState = stringResource(R.string.pattern_row_progress, step.patternRow, rows),
+            transitionSpec = { countTransition() },
+            label = "pattern row progress",
             modifier = Modifier.weight(1f),
-        )
+        ) { text ->
+            Text(text = text, style = MaterialTheme.typography.titleMedium)
+        }
         FilledTonalButton(
-            onClick = { onRowStep(step, -1) },
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onRowStep(step, -1)
+            },
             enabled = step.trackInCm || step.progress > 0 || step.patternRow > 0,
         ) {
             Text(stringResource(R.string.remove_count, "1"))
         }
         FilledTonalButton(
-            onClick = { onRowStep(step, 1) },
+            onClick = {
+                // The last row of a repeat completes it, which deserves the firmer confirmation.
+                haptics.performHapticFeedback(
+                    if (step.patternRow == rows - 1) HapticFeedbackType.Confirm else HapticFeedbackType.SegmentTick,
+                )
+                onRowStep(step, 1)
+            },
             enabled = step.trackInCm || step.progress < repeats,
             modifier = Modifier.padding(start = Spacing.sm),
         ) {

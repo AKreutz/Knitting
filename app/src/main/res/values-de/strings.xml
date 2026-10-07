@@ -55,6 +55,11 @@
     <string name="step_name">Schrittname</string>
     <string name="step_default_name">Schritt %1$d</string>
     <string name="step_type">Typ</string>
+    <string name="projects_empty_hint">Tippe auf „Neues Projekt“, um dein erstes zu planen.</string>
+    <string name="in_progress_empty_hint">Starte ein Projekt im Tab „Projekte“, um es hier zu verfolgen.</string>
+    <string name="section_details">Details</string>
+    <string name="section_length">Länge</string>
+    <string name="close">Schließen</string>
     <string name="step_type_cast_on">Anschlag</string>
     <string name="step_type_increases">Zunahmen</string>
     <string name="step_type_decreases">Abnahmen</string>

@@ -1,15 +1,24 @@
 package com.akreutz.knitting.ui.projects
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Grid4x4
+import androidx.compose.material.icons.filled.LinearScale
+import androidx.compose.material.icons.filled.Reorder
+import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,8 +27,9 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,8 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
@@ -41,6 +53,7 @@ import com.akreutz.knitting.data.RowPattern
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.ui.theme.KnittingTheme
+import com.akreutz.knitting.ui.theme.Spacing
 
 /** What the user entered in [AddStepDialog]; only the fields that apply to [type] are set. */
 data class NewStep(
@@ -200,55 +213,48 @@ fun AddStepDialog(
         }
     }?.copy(color = color.trim().ifEmpty { null })
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(titleRes)) },
-        text = {
-            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
-                OutlinedTextField(
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text(stringResource(R.string.step_name)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                EnumDropdown(
-                    labelRes = R.string.step_type,
-                    selected = type,
-                    options = StepType.entries,
-                    optionLabelRes = StepType::labelRes,
-                    onSelect = { type = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                )
-                OutlinedTextField(
-                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                    value = color,
-                    onValueChange = { color = it },
-                    label = { Text(stringResource(R.string.step_color_optional)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp),
-                )
-                if (type == StepType.Pattern) {
+    val hasLength = type == StepType.Pattern || type == StepType.PlainRows
+
+    FormDialog(
+        title = stringResource(titleRes),
+        confirmLabel = stringResource(confirmRes),
+        confirmEnabled = name.isNotBlank() && newStep != null,
+        onConfirm = { newStep?.let(onConfirm) },
+        onDismiss = onDismiss,
+    ) {
+        OutlinedTextField(
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+            value = name,
+            onValueChange = { name = it },
+            label = { Text(stringResource(R.string.step_name)) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        FormSection(stringResource(R.string.step_type)) {
+            StepTypeGrid(selected = type, onSelect = { type = it })
+        }
+        FormSection(stringResource(R.string.section_details)) {
+            OutlinedTextField(
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                value = color,
+                onValueChange = { color = it },
+                label = { Text(stringResource(R.string.step_color_optional)) },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            when (type) {
+                StepType.Pattern -> {
                     EnumDropdown(
                         labelRes = R.string.step_pattern_type,
                         selected = patternType,
                         options = PatternType.entries,
                         optionLabelRes = PatternType::labelRes,
                         onSelect = { patternType = it },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     // Entered as "rows × columns", side by side.
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         NumberField(
@@ -260,7 +266,7 @@ fun AddStepDialog(
                         Text(
                             text = "×",
                             style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.padding(horizontal = 8.dp),
+                            modifier = Modifier.padding(horizontal = Spacing.sm),
                         )
                         NumberField(
                             value = gridColumns,
@@ -273,23 +279,9 @@ fun AddStepDialog(
                         text = stringResource(R.string.step_pattern_size_hint, MAX_PATTERN_SIZE),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 4.dp),
                     )
-                    CmToggle(trackInCm) { trackInCm = it }
-                    if (trackInCm) {
-                        DecimalField(
-                            value = targetCm,
-                            onValueChange = { targetCm = it },
-                            labelRes = R.string.step_target_cm,
-                        )
-                    } else {
-                        NumberField(
-                            value = patternRepeats,
-                            onValueChange = { patternRepeats = it },
-                            labelRes = R.string.step_pattern_repeats,
-                        )
-                    }
-                } else if (type == StepType.Increases || type == StepType.Decreases) {
+                }
+                StepType.Increases, StepType.Decreases -> {
                     val increases = type == StepType.Increases
                     NumberField(
                         value = shapingCount,
@@ -312,11 +304,10 @@ fun AddStepDialog(
                             )
                         },
                         singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                } else if (type == StepType.CastOn) {
+                }
+                StepType.CastOn -> {
                     NumberField(
                         value = stitchCount,
                         onValueChange = { stitchCount = it },
@@ -328,9 +319,7 @@ fun AddStepDialog(
                         onValueChange = { method = it },
                         label = { Text(stringResource(R.string.step_method_optional)) },
                         singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
@@ -338,73 +327,116 @@ fun AddStepDialog(
                         onValueChange = { needleSize = it },
                         label = { Text(stringResource(R.string.step_needle_size_optional)) },
                         singleLine = true,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                } else if (type == StepType.Special) {
-                    OutlinedTextField(
-                        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text(stringResource(R.string.step_description_optional)) },
-                        minLines = 3,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
+                }
+                StepType.Special -> OutlinedTextField(
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(stringResource(R.string.step_description_optional)) },
+                    minLines = 3,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                StepType.PlainRows -> EnumDropdown(
+                    labelRes = R.string.step_row_pattern,
+                    selected = rowPattern,
+                    options = RowPattern.entries,
+                    optionLabelRes = RowPattern::labelRes,
+                    onSelect = { rowPattern = it },
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        }
+        if (hasLength) {
+            FormSection(stringResource(R.string.section_length)) {
+                CmToggle(trackInCm) { trackInCm = it }
+                if (trackInCm) {
+                    DecimalField(
+                        value = targetCm,
+                        onValueChange = { targetCm = it },
+                        labelRes = R.string.step_target_cm,
+                    )
+                } else if (type == StepType.Pattern) {
+                    NumberField(
+                        value = patternRepeats,
+                        onValueChange = { patternRepeats = it },
+                        labelRes = R.string.step_pattern_repeats,
                     )
                 } else {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 12.dp),
-                    ) {
-                        if (type == StepType.PlainRows) {
-                            EnumDropdown(
-                                labelRes = R.string.step_row_pattern,
-                                selected = rowPattern,
-                                options = RowPattern.entries,
-                                optionLabelRes = RowPattern::labelRes,
-                                onSelect = { rowPattern = it },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 8.dp),
-                            )
-                        }
-                        if (trackInCm) {
-                            DecimalField(
-                                value = targetCm,
-                                onValueChange = { targetCm = it },
-                                labelRes = R.string.step_target_cm,
-                                modifier = Modifier.weight(1f),
-                            )
+                    NumberField(
+                        value = targetRows,
+                        onValueChange = { targetRows = it },
+                        labelRes = R.string.step_target_rows,
+                    )
+                }
+            }
+        }
+    }
+}
+
+internal fun StepType.icon(): ImageVector = when (this) {
+    StepType.CastOn -> Icons.Filled.LinearScale
+    StepType.Increases -> Icons.Filled.AddCircle
+    StepType.Decreases -> Icons.Filled.RemoveCircle
+    StepType.PlainRows -> Icons.Filled.Reorder
+    StepType.Pattern -> Icons.Filled.Grid4x4
+    StepType.Special -> Icons.Filled.AutoAwesome
+}
+
+/** All step types as a grid of selectable tiles, three per row. */
+@Composable
+private fun StepTypeGrid(selected: StepType, onSelect: (StepType) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        StepType.entries.chunked(3).forEach { rowTypes ->
+            // Tiles in a row share the height of the tallest one, so a label that wraps does not make them uneven.
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                rowTypes.forEach { option ->
+                    val isSelected = option == selected
+                    Surface(
+                        selected = isSelected,
+                        onClick = { onSelect(option) },
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primaryContainer
                         } else {
-                            NumberField(
-                                value = targetRows,
-                                onValueChange = { targetRows = it },
-                                labelRes = R.string.step_target_rows,
-                                modifier = Modifier.weight(1f),
+                            MaterialTheme.colorScheme.surfaceContainerLow
+                        },
+                        border = BorderStroke(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.outlineVariant
+                            },
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight(),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxHeight()
+                                .padding(vertical = Spacing.sm, horizontal = Spacing.xs),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xs, Alignment.CenterVertically),
+                        ) {
+                            DuotoneIcon(option.icon())
+                            Text(
+                                text = stringResource(option.labelRes()),
+                                style = MaterialTheme.typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                                maxLines = 2,
                             )
                         }
                     }
-                    CmToggle(trackInCm) { trackInCm = it }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { newStep?.let(onConfirm) },
-                enabled = name.isNotBlank() && newStep != null,
-            ) {
-                Text(stringResource(confirmRes))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
-    )
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -454,7 +486,6 @@ private fun CmToggle(checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 4.dp)
             .toggleable(value = checked, role = Role.Checkbox, onValueChange = onCheckedChange),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -480,9 +511,7 @@ private fun DecimalField(
     value: String,
     onValueChange: (String) -> Unit,
     @StringRes labelRes: Int,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(top = 12.dp),
+    modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
     OutlinedTextField(
         value = value,
@@ -505,9 +534,7 @@ private fun NumberField(
     value: String,
     onValueChange: (String) -> Unit,
     @StringRes labelRes: Int,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(top = 12.dp),
+    modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
     OutlinedTextField(
         value = value,

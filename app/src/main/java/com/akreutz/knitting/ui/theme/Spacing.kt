@@ -8,6 +8,7 @@ object Spacing {
     val sm = 8.dp
     val md = 12.dp
     val lg = 16.dp
+    val xl = 24.dp
 
     /** Bottom padding that keeps the last list item clear of the floating action button. */
     val fabClearance = 88.dp

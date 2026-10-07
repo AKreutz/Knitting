@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,10 +60,10 @@ fun InProgressProjectsScreen(
 
     Box(modifier = modifier.fillMaxSize()) {
         if (inProgress.isEmpty()) {
-            Text(
-                text = stringResource(R.string.in_progress_empty),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            EmptyState(
+                icon = Icons.Outlined.FormatListNumbered,
+                title = stringResource(R.string.in_progress_empty),
+                hint = stringResource(R.string.in_progress_empty_hint),
                 modifier = Modifier.align(Alignment.Center),
             )
         } else {

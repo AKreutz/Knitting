@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -162,10 +163,10 @@ private fun ProjectsContent(
 
     Box(modifier = modifier.fillMaxSize()) {
         if (projects.isEmpty()) {
-            Text(
-                text = stringResource(R.string.projects_empty),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            EmptyState(
+                icon = Icons.Outlined.Checkroom,
+                title = stringResource(R.string.projects_empty),
+                hint = stringResource(R.string.projects_empty_hint),
                 modifier = Modifier.align(Alignment.Center),
             )
         } else {
