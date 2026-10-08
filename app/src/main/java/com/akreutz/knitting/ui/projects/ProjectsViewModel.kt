@@ -10,6 +10,7 @@ import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -24,6 +25,10 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
     val stepsByProject: StateFlow<Map<Long, List<Step>>> = dao.observeAllSteps()
         .map { steps -> steps.groupBy { it.projectId } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    /** Reads the database once, since [projects] starts out empty before Room has delivered anything. */
+    suspend fun hasProjectInProgress(): Boolean =
+        dao.observeAll().first().any { it.status == ProjectStatus.InProgress }
 
     private fun NewStep.toStep(projectId: Long) = Step(
         projectId = projectId,

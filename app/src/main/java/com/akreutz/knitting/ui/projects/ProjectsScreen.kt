@@ -73,6 +73,7 @@ import java.util.concurrent.TimeUnit
 @Composable
 fun ProjectsScreen(
     modifier: Modifier = Modifier,
+    onProjectStarted: () -> Unit = {},
     viewModel: ProjectsViewModel = viewModel(),
 ) {
     val projects by viewModel.projects.collectAsState()
@@ -114,6 +115,7 @@ fun ProjectsScreen(
             onConfirm = {
                 viewModel.setStatus(projectToStart, ProjectStatus.InProgress)
                 projectToStartId = null
+                onProjectStarted()
             },
         )
     }
