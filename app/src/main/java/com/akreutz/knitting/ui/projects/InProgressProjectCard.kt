@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Celebration
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -40,7 +42,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.LinearGradientShader
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -180,10 +188,16 @@ private fun CurrentStepPanel(
     onPatternRowStep: ((Step, Int) -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    val primary = MaterialTheme.colorScheme.primary
+    val secondary = MaterialTheme.colorScheme.secondary
+    val shape = RoundedCornerShape(12.dp)
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.secondary,
+        // Split diagonally into the app's two colors, the same way as the two-tone icons.
+        modifier = modifier
+            .fillMaxWidth()
+            .background(diagonalSplitBrush(primary, secondary), shape),
+        shape = shape,
+        color = Color.Transparent,
         contentColor = MaterialTheme.colorScheme.onSecondary,
     ) {
         // Moving on to the next step swaps the panel's content with a short scale-and-fade; counting within a step does not.
@@ -228,13 +242,13 @@ private fun CurrentStepPanel(
                     )
                 }
                 if (step.color != null && shade != null) {
-                    // Cream behind the ball, so its outline and needles stand out from the panel's green.
+                    // The card's own cream behind the ball, so its outline and needles stand out from the panel's colors.
                     YarnBall(
                         shade,
                         description = step.color,
                         modifier = Modifier
                             .padding(start = Spacing.sm)
-                            .background(MaterialTheme.colorScheme.background, RoundedCornerShape(10.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest, RoundedCornerShape(10.dp))
                             .padding(4.dp),
                     )
                 }
@@ -261,7 +275,7 @@ private fun CurrentStepPanel(
                     drawStopIndicator = {},
                     gapSize = 0.dp,
                 )
-                StepCounter(step, onProgressChange, modifier = Modifier.padding(top = Spacing.xs))
+                StepCounter(step, onProgressChange, modifier = Modifier.padding(top = Spacing.xs), buttonColors = panelButtonColors())
             }
             val rows = step.patternRows
             val columns = step.patternColumns
@@ -282,10 +296,47 @@ private fun CurrentStepPanel(
                 }
             }
             if (step.type == StepType.Pattern && rows != null && target != null && onPatternRowStep != null) {
-                PatternRowCounter(step, rows, target, onPatternRowStep)
+                PatternRowCounter(step, rows, target, onPatternRowStep, panelButtonColors())
             }
         }
         }
+    }
+}
+
+/**
+ * Colors for the tonal buttons on the two-toned current-step panel: the card's cream instead of pale
+ * sage, and a ghosted version of it when inactive, so the split shows through.
+ */
+@Composable
+private fun panelButtonColors(): ButtonColors {
+    val colors = MaterialTheme.colorScheme
+    return ButtonDefaults.filledTonalButtonColors(
+        containerColor = colors.surfaceContainerHighest,
+        contentColor = colors.onSurface,
+        disabledContainerColor = colors.surfaceContainerHighest.copy(alpha = 0.35f),
+        disabledContentColor = colors.onSecondary.copy(alpha = 0.6f),
+    )
+}
+
+/**
+ * [first] in the top right and [second] in the bottom left, divided by the shape's own diagonal from
+ * the top left to the bottom right corner. The gradient axis is perpendicular to that diagonal and
+ * sized to just reach the two other corners, so the split runs corner to corner on any proportions.
+ */
+internal fun diagonalSplitBrush(first: Color, second: Color): Brush = object : ShaderBrush() {
+    override fun createShader(size: Size): Shader {
+        val w = size.width
+        val h = size.height
+        val center = Offset(w / 2f, h / 2f)
+        // Half the axis: the normal (h, -w) of the diagonal, scaled so its ends touch the corners.
+        val scale = w * h / (w * w + h * h)
+        val half = Offset(scale * h, -scale * w)
+        return LinearGradientShader(
+            from = center + half,
+            to = center - half,
+            colors = listOf(first, first, second, second),
+            colorStops = listOf(0f, 0.5f, 0.5f, 1f),
+        )
     }
 }
 
@@ -296,6 +347,7 @@ private fun PatternRowCounter(
     rows: Int,
     repeats: Int,
     onRowStep: (Step, Int) -> Unit,
+    buttonColors: ButtonColors,
 ) {
     val haptics = LocalHapticFeedback.current
     Row(
@@ -316,6 +368,7 @@ private fun PatternRowCounter(
                 onRowStep(step, -1)
             },
             enabled = step.trackInCm || step.progress > 0 || step.patternRow > 0,
+            colors = buttonColors,
         ) {
             CounterButtonLabel(stringResource(R.string.remove_count, "1"))
         }
@@ -328,6 +381,7 @@ private fun PatternRowCounter(
                 onRowStep(step, 1)
             },
             enabled = step.trackInCm || step.progress < repeats,
+            colors = buttonColors,
             modifier = Modifier.padding(start = Spacing.sm),
         ) {
             CounterButtonLabel(stringResource(R.string.add_count, "1"))

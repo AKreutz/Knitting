@@ -5,17 +5,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 // The app is light-only: no dark scheme and no dynamic (wallpaper) color.
 private val KnittingColorScheme = lightColorScheme(
     primary = Terracotta,
-    onPrimary = Color.White,
+    onPrimary = Cream,
     primaryContainer = TerracottaLight,
     onPrimaryContainer = TerracottaDark,
     secondary = Sage,
-    onSecondary = Color.White,
+    onSecondary = Cream,
     secondaryContainer = SageLight,
     onSecondaryContainer = SageDark,
     background = Cream,

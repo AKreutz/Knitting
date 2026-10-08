@@ -2,6 +2,7 @@ package com.akreutz.knitting.ui.projects
 
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,6 +28,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.pluralStringResource
@@ -197,11 +200,21 @@ private fun ProjectsContent(
             expanded = fabExpanded,
             icon = { Icon(Icons.Filled.Add, contentDescription = null) },
             text = { Text(stringResource(R.string.new_project)) },
-            containerColor = MaterialTheme.colorScheme.secondary,
+            shape = FloatingActionButtonDefaults.extendedFabShape,
+            // Two-toned like the current-step panel: the split brush replaces the flat container color.
+            containerColor = Color.Transparent,
             contentColor = MaterialTheme.colorScheme.onSecondary,
+            // The button's own shadow would show through its transparent container as a pale box, so it is
+            // flat and the shadow is drawn here, behind the brush.
+            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(Spacing.lg),
+                .padding(Spacing.lg)
+                .shadow(6.dp, FloatingActionButtonDefaults.extendedFabShape)
+                .background(
+                    diagonalSplitBrush(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary),
+                    FloatingActionButtonDefaults.extendedFabShape,
+                ),
         )
     }
 }

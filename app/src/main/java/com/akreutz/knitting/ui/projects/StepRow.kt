@@ -26,6 +26,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -357,6 +359,7 @@ internal fun StepCounter(
     step: Step,
     onProgressChange: ((Step, Int) -> Unit)?,
     modifier: Modifier = Modifier,
+    buttonColors: ButtonColors = ButtonDefaults.filledTonalButtonColors(),
 ) {
     val target = step.progressTarget() ?: return
     val haptics = LocalHapticFeedback.current
@@ -385,7 +388,7 @@ internal fun StepCounter(
                 )
             }
             if (onProgressChange != null) {
-                FilledTonalButton(onClick = { change(if (done) 0 else target) }) {
+                FilledTonalButton(onClick = { change(if (done) 0 else target) }, colors = buttonColors) {
                     CounterButtonLabel(stringResource(if (done) R.string.undo else R.string.mark_done))
                 }
             }
@@ -417,12 +420,14 @@ internal fun StepCounter(
             FilledTonalButton(
                 onClick = { change(step.progress - decrement) },
                 enabled = step.progress > 0,
+                colors = buttonColors,
             ) {
                 CounterButtonLabel(stringResource(R.string.remove_count, label(decrement)))
             }
             FilledTonalButton(
                 onClick = { change(step.progress + increment) },
                 enabled = step.progress < target,
+                colors = buttonColors,
                 modifier = Modifier.padding(start = Spacing.sm),
             ) {
                 CounterButtonLabel(stringResource(R.string.add_count, label(increment)))
