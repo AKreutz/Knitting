@@ -1,0 +1,14 @@
+<iq:manifest version="3" xmlns:iq="http://www.garmin.com/xml/connectiq">
+    <!-- The id must match WATCH_APP_ID in the Android app (GarminLink.kt). -->
+    <iq:application entry="KnittingCounterApp" id="e142bb0b6df0473083015a609fa1a268" launcherIcon="@Drawables.LauncherIcon" minApiLevel="3.2.0" name="@Strings.AppName" type="watch-app" version="1.0.0">
+        <iq:products>
+            <iq:product id="fr745"/>
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Communications"/>
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>ger</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>

@@ -20,3 +20,8 @@ keystore.properties
 *.jks
 *.keystore
 /.kotlin/
+
+# Garmin watch app build output
+/garmin/bin/
+*.prg
+*.der

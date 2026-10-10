@@ -1,0 +1,10 @@
+﻿<strings>
+    <string id="AppName">Stricken</string>
+    <string id="Waiting">Warte auf Handy…</string>
+    <string id="Idle">Kein Projekt in Arbeit</string>
+    <string id="NoPhone">Handy nicht erreichbar</string>
+    <string id="Back">Zurück</string>
+    <string id="Resync">Sync</string>
+    <string id="Rows">Reihen</string>
+    <string id="Repeats">Wiederh.</string>
+</strings>

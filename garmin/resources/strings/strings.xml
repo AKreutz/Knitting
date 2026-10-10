@@ -1,0 +1,10 @@
+﻿<strings>
+    <string id="AppName">Knitting</string>
+    <string id="Waiting">Waiting for phone…</string>
+    <string id="Idle">No project in progress</string>
+    <string id="NoPhone">Phone not reachable</string>
+    <string id="Back">Back</string>
+    <string id="Resync">Resync</string>
+    <string id="Rows">rows</string>
+    <string id="Repeats">Repeats</string>
+</strings>
