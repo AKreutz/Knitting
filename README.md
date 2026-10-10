@@ -9,11 +9,12 @@ An Android app for planning knitting projects and keeping your place while you k
 </p>
 
 - [Using the app](#using-the-app)
+- [Garmin watch](#garmin-watch)
 - [Development](#development)
 
 ## Using the app
 
-The app has two tabs. **Projects** is where you plan, and **In progress** is where you knit. The globe icon in the top bar switches the language between English, German (Deutsch) and the system default.
+The app has two tabs. **Projects** is where you plan, and **In progress** is where you knit. The globe icon in the top bar switches the language between English, German (Deutsch) and the system default. The watch icon next to it sets up the [Garmin watch](#garmin-watch) remote.
 
 ### Life of a project
 
@@ -94,12 +95,55 @@ Tap **Save** when you are done. The saved grid shows which colors it uses.
 
 Your projects are stored only on your phone. There is no account, no sync and no network access.
 
+## Garmin watch
+
+A Garmin Forerunner 745 can count for you, so you don't have to put your knitting down to tap the phone. The watch app is a remote control: the phone keeps all the counters, and the watch shows the current step and sends your taps to it. They talk through the Garmin Connect app, so that has to be installed on the phone and the watch paired with it.
+
+### Setting it up
+
+1. Install the watch app on the watch (see [Installing the watch app](#installing-the-watch-app)).
+2. In the Knitting app, tap the watch icon in the top bar and switch on **Control counters from a Garmin watch**. Android asks to show notifications; the app shows one while the remote is active.
+3. The menu shows the state of the link: *Watch connected*, *Watch not in range*, *No paired Garmin watch found* or a hint to install or update Garmin Connect. If the link cannot recover, the app stops it and shows why.
+4. Open **Knitting** (**Stricken** in German) on the watch.
+
+The remote starts again whenever you open the app while the switch is on. It does not start by itself after a reboot.
+
+### Counting from the watch
+
+The watch works on the **current step**: the first unfinished step with a counter in the most recent project that is in progress. Counting on the phone and on the watch can be mixed freely, and either one updates the other.
+
+| Button | Action |
+| --- | --- |
+| **START** | Count up |
+| **DOWN** | Count back |
+| **UP** | Resync with the phone |
+| **BACK** | Leave the app |
+
+The screen labels each button, and the labels show how much a tap changes the count.
+
+- Taps do what the **+** and **−** buttons of the step do in the app: 10 stitches for a cast-on, a whole centimeter for a step tracked by length, otherwise one. Near the target a tap only adds what is left, and counting back removes a partial amount first.
+- On a **pattern** step the watch shows the rows of the current repeat as the big number and the repeats (or the length) below it. Taps only count rows. Repeats are completed by the last row, as in the app.
+- Counting back from the very start of a step continues on the previous step, so a mistaken extra tap is easy to undo across steps.
+- The watch buzzes briefly on each count and for longer when a step reaches its target.
+
+### Installing the watch app
+
+The watch app lives in `garmin/` and is not published to the Connect IQ store. Build it with the [Connect IQ SDK](https://developer.garmin.com/connect-iq/sdk/) (9.2 or newer, with the Forerunner 745 device files) and a developer key, which the Monkey C extension for VS Code or `openssl` can create. Keep the key out of the repository:
+
+```
+cd garmin
+monkeyc -d fr745 -f monkey.jungle -o bin/KnittingCounter.prg -y <path to developer_key.der> -w
+```
+
+Then connect the watch over USB, copy `KnittingCounter.prg` into `GARMIN/Apps` on the watch and disconnect it. The watch loads the app when it is unplugged.
+
 ## Development
 
 ### Tech stack
 
 - Kotlin, Jetpack Compose and Material 3
 - Room for local storage
+- The Garmin Connect IQ companion SDK (`com.garmin.connectiq:ciq-companion-app-sdk`) for the watch remote
 - Gradle with the Android Gradle Plugin, KSP and version catalogs (`gradle/libs.versions.toml`)
 - Min SDK 24, target SDK 37
 
@@ -108,12 +152,17 @@ Your projects are stored only on your phone. There is no account, no sync and no
 ```
 app/src/main/java/com/akreutz/knitting/
 ├── MainActivity.kt        Entry point
-├── data/                  Room database, entities (Project, Step), DAO, enums
+├── data/                  Room database, entities (Project, Step), DAO, enums,
+│                          CounterRepository (the counting rules shared by the screens and the watch)
+├── watch/                 Garmin remote: message protocol, controller, Connect IQ link, foreground service
 └── ui/
     ├── KnittingApp.kt     Scaffold with the top bar and the two tabs
+    ├── WatchButton.kt     Top bar menu that switches the watch remote on and off
     ├── navigation/        Tab destinations
     ├── projects/          Both screens, project and step cards, dialogs, pattern grid, view model
     └── theme/             Colors, typography and spacing
+
+garmin/                    The Monkey C watch app (Forerunner 745)
 ```
 
 Strings live in `app/src/main/res/values/strings.xml` with a German translation in `values-de`. Add new text to both.
@@ -124,6 +173,7 @@ Open the project in Android Studio, or from the command line:
 
 ```
 ./gradlew assembleDebug    # build the debug APK
+./gradlew testDebugUnitTest # run the unit tests
 ./gradlew lint             # run Android lint
 ```
 
@@ -138,6 +188,14 @@ The debug build installs next to a release build as "Knitting Debug" (applicatio
 ### Release builds
 
 Release signing reads `keystore.properties` in the project root, which is not checked in. It needs the keys `storeFile`, `storePassword`, `keyAlias` and `keyPassword`.
+
+### Watch remote
+
+The phone and the watch exchange small messages through Garmin Connect. The protocol is documented on `WatchProtocol` (`watch/WatchProtocol.kt`): the watch sends `inc`, `dec` or `sync`, and the phone answers with the current step, its counters and the size of one tap. The phone always acts on its own current step, never on one the watch names, so a stale watch cannot change the wrong step.
+
+Only `GarminLink` needs Garmin's SDK. The rest talks to the `WatchLink` interface, which the unit tests replace with a fake. The watch app's `id` in `garmin/manifest.xml` must equal `WATCH_APP_ID` in `GarminLink.kt`.
+
+The counting rules, such as clamping, pattern row rollover and how far a tap moves, are in `data/CounterRepository.kt` and `data/Step.kt` so the buttons in the app and the watch always agree.
 
 ### Data
 
