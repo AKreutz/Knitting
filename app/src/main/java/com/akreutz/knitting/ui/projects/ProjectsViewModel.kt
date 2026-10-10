@@ -3,6 +3,7 @@ package com.akreutz.knitting.ui.projects
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.akreutz.knitting.data.CounterRepository
 import com.akreutz.knitting.data.KnittingDatabase
 import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.ProjectStatus
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class ProjectsViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = KnittingDatabase.get(application).projectDao()
+    private val counters = CounterRepository(dao)
 
     val projects: StateFlow<List<Project>> = dao.observeAll()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -65,29 +67,12 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
     }
 
     fun setStepProgress(step: Step, progress: Int) {
-        val max = step.progressTarget() ?: return
-        val clamped = progress.coerceIn(0, max)
-        viewModelScope.launch {
-            // Changing the repeat count by hand restarts the row count within the repeat;
-            // centimeters are independent of the rows.
-            if (step.type == StepType.Pattern && !step.trackInCm) dao.updatePatternProgress(step.id, clamped, 0)
-            else dao.updateStepProgress(step.id, clamped)
-        }
+        viewModelScope.launch { counters.setProgress(step, progress) }
     }
 
     /** Moves a pattern step one row forward or back; finishing a repeat's last row completes that repeat. */
     fun stepPatternRow(step: Step, delta: Int) {
-        val rows = step.patternRows ?: return
-        if (step.trackInCm) {
-            // The length is counted in centimeters by hand, so the rows just cycle through the grid.
-            val next = Math.floorMod(step.patternRow + delta, rows)
-            viewModelScope.launch { dao.updatePatternProgress(step.id, step.progress, next) }
-            return
-        }
-        val repeats = step.progressTarget() ?: return
-        // Linear position over all rows of all repeats keeps the wrap-around arithmetic in one place.
-        val position = (step.progress * rows + step.patternRow + delta).coerceIn(0, repeats * rows)
-        viewModelScope.launch { dao.updatePatternProgress(step.id, position / rows, position % rows) }
+        viewModelScope.launch { counters.stepPatternRow(step, delta) }
     }
 
     fun setStatus(project: Project, status: ProjectStatus) {
