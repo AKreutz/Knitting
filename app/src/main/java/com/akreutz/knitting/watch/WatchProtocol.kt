@@ -2,6 +2,8 @@ package com.akreutz.knitting.watch
 
 import com.akreutz.knitting.data.CurrentCounter
 import com.akreutz.knitting.data.StepType
+import com.akreutz.knitting.data.decrement
+import com.akreutz.knitting.data.increment
 import com.akreutz.knitting.data.progressTarget
 
 /** What the watch asks of the phone. The phone always acts on its own current step, never on one the watch names. */
@@ -17,8 +19,10 @@ sealed interface WatchCommand {
  * The messages exchanged with the watch app: small maps of strings and ints, as Connect IQ limits message size.
  *
  * Watch to phone: `{"cmd": "inc" | "dec" | "sync"}`.
- * Phone to watch: `{"p": project, "s": step, "t": step type, "prog": n, "max": n}`, plus `"row"` and `"rows"` for
- * pattern steps and `"cm": 1` when the counts are millimeters; `{"idle": 1}` when there is nothing to count.
+ * Phone to watch: `{"p": project, "s": step, "t": step type, "prog": n, "max": n, "inc": n, "dec": n}`, plus `"row"`
+ * and `"rows"` for pattern steps and `"cm": 1` when the counts are millimeters; `{"idle": 1}` when there is nothing
+ * to count. `inc` and `dec` are how much one tap adds or removes, in the units of `prog` (one row for a pattern step),
+ * so the watch can label its buttons.
  */
 object WatchProtocol {
     private const val MAX_NAME_LENGTH = 40
@@ -42,6 +46,8 @@ object WatchProtocol {
             "t" to step.type.name,
             "prog" to step.progress,
             "max" to (step.progressTarget() ?: 0),
+            "inc" to if (step.type == StepType.Pattern) 1 else step.increment(),
+            "dec" to if (step.type == StepType.Pattern) 1 else step.decrement(),
         )
         if (step.type == StepType.Pattern) {
             message["row"] = step.patternRow

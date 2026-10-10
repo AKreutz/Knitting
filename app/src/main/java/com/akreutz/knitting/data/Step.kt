@@ -80,6 +80,25 @@ fun Step.progressTarget(): Int? = when (type) {
     StepType.Special -> 1
 }
 
+/** The size of a regular tap on a step's counter: a whole centimeter, 10 cast-on stitches or a single count. */
+private fun Step.chunk(): Int = when {
+    trackInCm -> MM_PER_CM
+    type == StepType.CastOn -> 10
+    else -> 1
+}
+
+/** How much a tap on a step's counter adds; less than a full chunk when that is all that is left. */
+fun Step.increment(): Int {
+    val remaining = (progressTarget() ?: 0) - progress
+    return if (remaining in 1 until chunk()) remaining else chunk()
+}
+
+/** How much a tap on a step's counter removes; a partial chunk (e.g. 2.5 cm or 25 stitches) goes first. */
+fun Step.decrement(): Int {
+    val partial = progress % chunk()
+    return if (partial > 0) partial else chunk()
+}
+
 /** Typical stockinette gauge (30 rows per 10 cm), used to compare length-tracked steps with row-counted ones. */
 const val DEFAULT_ROWS_PER_CM = 3
 

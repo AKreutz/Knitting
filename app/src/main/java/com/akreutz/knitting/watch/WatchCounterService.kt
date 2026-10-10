@@ -72,7 +72,7 @@ class WatchCounterService : Service() {
             this, 0, Intent(this, MainActivity::class.java), PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.stat_sys_data_bluetooth)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.watch_notification_title))
             .setContentText(getString(connection.labelRes()))
             .setContentIntent(open)

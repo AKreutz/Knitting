@@ -54,6 +54,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.akreutz.knitting.R
 import com.akreutz.knitting.data.MM_PER_CM
+import com.akreutz.knitting.data.decrement
+import com.akreutz.knitting.data.increment
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
@@ -262,25 +264,6 @@ private fun Step.amountText(count: Int): String {
 /** Millimeters as centimeters in the user's locale, with a decimal only when there is one. */
 private fun formatCm(mm: Int): String =
     NumberFormat.getNumberInstance().apply { maximumFractionDigits = 1 }.format(mm / MM_PER_CM.toDouble())
-
-/** The size of a regular tap on a step's counter: a whole centimeter, 10 cast-on stitches or a single count. */
-private fun Step.chunk(): Int = when {
-    trackInCm -> MM_PER_CM
-    type == StepType.CastOn -> 10
-    else -> 1
-}
-
-/** How much a tap on a step's counter adds; less than a full chunk when that is all that is left. */
-internal fun Step.increment(): Int {
-    val remaining = (progressTarget() ?: 0) - progress
-    return if (remaining in 1 until chunk()) remaining else chunk()
-}
-
-/** How much a tap on a step's counter removes; a partial chunk (e.g. 2.5 cm or 25 stitches) goes first. */
-internal fun Step.decrement(): Int {
-    val partial = progress % chunk()
-    return if (partial > 0) partial else chunk()
-}
 
 /** One entered detail of a step; a null [labelRes] marks free text that has no label, like a description. */
 internal data class StepDetail(@StringRes val labelRes: Int?, val value: String)

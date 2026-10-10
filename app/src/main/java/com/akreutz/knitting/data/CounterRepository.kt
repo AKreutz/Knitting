@@ -38,11 +38,11 @@ private fun Step.usesPatternRows() = type == StepType.Pattern && !trackInCm
 
 /**
  * The counters after one tap of a remote control (the watch) in direction [delta], or null for steps without a counter.
- * A pattern step moves one row; any other step moves one count, or a whole centimeter when tracking length.
+ * A pattern step moves one row; any other step moves like the + and - buttons of its counter in the app do.
  */
 fun Step.counterAfterStepping(delta: Int): StepCounter? =
     if (type == StepType.Pattern) counterAfterPatternRowStep(delta)
-    else counterAfterSettingProgress(progress + delta * if (trackInCm) MM_PER_CM else 1)
+    else counterAfterSettingProgress(if (delta > 0) progress + increment() else progress - decrement())
 
 /** The step a remote control works on, together with its project. */
 data class CurrentCounter(val project: Project, val step: Step)
@@ -58,6 +58,17 @@ fun currentCounter(projects: List<Project>, steps: List<Step>): CurrentCounter? 
     return CurrentCounter(project, step)
 }
 
+/**
+ * The step a tap in direction [delta] changes: the current step, or, when counting back from the very start of it,
+ * the counted step before it, which then becomes the current one again. Null when there is nothing to change.
+ */
+fun tapTarget(projects: List<Project>, steps: List<Step>, delta: Int): Step? {
+    val current = currentCounter(projects, steps)?.step ?: return null
+    if (delta >= 0 || current.progress != 0 || current.patternRow != 0) return current
+    val counted = steps.filter { it.projectId == current.projectId && it.completedFraction() != null }
+    return counted.getOrNull(counted.indexOfFirst { it.id == current.id } - 1)
+}
+
 /** Changes step counters in the database; shared by the screens and anything else that drives the counters. */
 class CounterRepository(private val dao: ProjectDao) {
     /** The step a remote control works on right now; emits again whenever it or its counters change. */
@@ -66,7 +77,7 @@ class CounterRepository(private val dao: ProjectDao) {
 
     /** Moves the current step one tap in direction [delta], reading the database fresh so a stale caller can't misfire. */
     suspend fun stepCurrent(delta: Int) {
-        val step = current.first()?.step ?: return
+        val step = tapTarget(dao.observeAll().first(), dao.observeAllSteps().first(), delta) ?: return
         val counter = step.counterAfterStepping(delta) ?: return
         dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
     }

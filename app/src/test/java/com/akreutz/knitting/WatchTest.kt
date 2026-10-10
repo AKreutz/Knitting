@@ -8,6 +8,7 @@ import com.akreutz.knitting.data.StepCounter
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.counterAfterStepping
 import com.akreutz.knitting.data.currentCounter
+import com.akreutz.knitting.data.tapTarget
 import com.akreutz.knitting.watch.WatchCommand
 import com.akreutz.knitting.watch.WatchCounterController
 import com.akreutz.knitting.watch.WatchLink
@@ -61,11 +62,58 @@ class WatchTest {
     }
 
     @Test
+    fun countingBackFromTheStartOfAStepWorksOnThePreviousStep() {
+        val steps = listOf(rows(1, 10), rows(2, 0), rows(3, 0))
+        assertEquals(1L, tapTarget(listOf(project), steps, -1)?.id)
+        assertEquals(2L, tapTarget(listOf(project), steps, 1)?.id)
+    }
+
+    @Test
+    fun countingBackWithinAStepStaysOnIt() {
+        val steps = listOf(rows(1, 10), rows(2, 1))
+        assertEquals(2L, tapTarget(listOf(project), steps, -1)?.id)
+    }
+
+    @Test
+    fun countingBackFromTheFirstStepDoesNothing() {
+        assertNull(tapTarget(listOf(project), listOf(rows(1, 0), rows(2, 0)), -1))
+    }
+
+    @Test
+    fun countingBackFromARepeatsFirstRowStaysOnThePattern() {
+        val steps = listOf(rows(1, 10), pattern(progress = 1, patternRow = 0))
+        assertEquals(9L, tapTarget(listOf(project), steps, -1)?.id)
+        val midRepeat = listOf(rows(1, 10), pattern(progress = 0, patternRow = 2))
+        assertEquals(9L, tapTarget(listOf(project), midRepeat, -1)?.id)
+    }
+
+    @Test
     fun steppingMovesOneCountOrOneCentimeter() {
         assertEquals(StepCounter(4, 0), rows(1, 3).counterAfterStepping(1))
         assertEquals(StepCounter(0, 0), rows(1, 0).counterAfterStepping(-1))
         val cm = Step(projectId = 1, name = "Body", type = StepType.PlainRows, trackInCm = true, targetMm = 100, progress = 25)
         assertEquals(StepCounter(35, 0), cm.counterAfterStepping(1))
+    }
+
+    @Test
+    fun steppingCastOnMovesTenStitchesLikeTheButtons() {
+        fun castOn(progress: Int) = Step(
+            projectId = 1, name = "Cast on", type = StepType.CastOn, stitchCount = 25, progress = progress,
+        )
+        assertEquals(StepCounter(10, 0), castOn(0).counterAfterStepping(1))
+        assertEquals(StepCounter(25, 0), castOn(20).counterAfterStepping(1))
+        assertEquals(StepCounter(20, 0), castOn(25).counterAfterStepping(-1))
+        assertEquals(StepCounter(10, 0), castOn(20).counterAfterStepping(-1))
+    }
+
+    @Test
+    fun steppingCentimetersRemovesAPartialCentimeterFirst() {
+        fun body(progress: Int) = Step(
+            projectId = 1, name = "Body", type = StepType.PlainRows, trackInCm = true, targetMm = 100, progress = progress,
+        )
+        assertEquals(StepCounter(20, 0), body(25).counterAfterStepping(-1))
+        assertEquals(StepCounter(10, 0), body(20).counterAfterStepping(-1))
+        assertEquals(StepCounter(100, 0), body(95).counterAfterStepping(1))
     }
 
     @Test
@@ -88,14 +136,29 @@ class WatchTest {
     fun encodesStateForTheWatch() {
         assertEquals(mapOf("idle" to 1), WatchProtocol.encode(null))
         assertEquals(
-            mapOf("p" to "Scarf", "s" to "Rows 2", "t" to "PlainRows", "prog" to 3, "max" to 10),
+            mapOf("p" to "Scarf", "s" to "Rows 2", "t" to "PlainRows", "prog" to 3, "max" to 10, "inc" to 1, "dec" to 1),
             WatchProtocol.encode(CurrentCounter(project, rows(2, 3))),
         )
         assertEquals(
-            mapOf("p" to "Scarf", "s" to "Lace", "t" to "Pattern", "prog" to 1, "max" to 3, "row" to 2, "rows" to 4),
+            mapOf(
+                "p" to "Scarf", "s" to "Lace", "t" to "Pattern", "prog" to 1, "max" to 3, "inc" to 1, "dec" to 1,
+                "row" to 2, "rows" to 4,
+            ),
             WatchProtocol.encode(CurrentCounter(project, pattern(progress = 1, patternRow = 2))),
         )
         assertEquals(1, WatchProtocol.encode(CurrentCounter(project, pattern(trackInCm = true)))["cm"])
+    }
+
+    @Test
+    fun encodesTheAmountOfEachTapLikeTheButtons() {
+        val castOn = Step(projectId = 1, name = "Cast on", type = StepType.CastOn, stitchCount = 25, progress = 25)
+        val encoded = WatchProtocol.encode(CurrentCounter(project, castOn))
+        assertEquals(10, encoded["inc"])
+        assertEquals(5, encoded["dec"])
+        val cm = Step(projectId = 1, name = "Body", type = StepType.PlainRows, trackInCm = true, targetMm = 100, progress = 25)
+        val encodedCm = WatchProtocol.encode(CurrentCounter(project, cm))
+        assertEquals(10, encodedCm["inc"])
+        assertEquals(5, encodedCm["dec"])
     }
 
     @Test
