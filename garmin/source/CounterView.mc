@@ -2,6 +2,8 @@ import Toybox.Attention;
 import Toybox.Communications;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.System;
+import Toybox.Timer;
 import Toybox.WatchUi;
 
 // Tells the app whether a message to the phone arrived.
@@ -28,9 +30,28 @@ class CounterView extends WatchUi.View {
     private var mState as Dictionary? = null;
     private var mIdle as Boolean = false;
     private var mPhoneReachable as Boolean = true;
+    private var mClockTimer as Timer.Timer? = null;
 
     function initialize() {
         View.initialize();
+    }
+
+    // An app screen only redraws on request, so the clock needs a timer to stay current.
+    function onShow() as Void {
+        var timer = new Timer.Timer();
+        timer.start(method(:onClockTick), 15000, true);
+        mClockTimer = timer;
+    }
+
+    function onHide() as Void {
+        if (mClockTimer != null) {
+            mClockTimer.stop();
+            mClockTimer = null;
+        }
+    }
+
+    function onClockTick() as Void {
+        WatchUi.requestUpdate();
     }
 
     function send(command as String) as Void {
@@ -82,6 +103,7 @@ class CounterView extends WatchUi.View {
         var center = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
 
         drawButtonLabels(dc, w, h);
+        drawClock(dc, w, h);
 
         if (mState == null) {
             var message = !mPhoneReachable ? Rez.Strings.NoPhone : (mIdle ? Rez.Strings.Idle : Rez.Strings.Waiting);
@@ -94,10 +116,8 @@ class CounterView extends WatchUi.View {
         var isPattern = state["row"] != null;
         var inCm = state["cm"] != null;
 
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.14, Graphics.FONT_XTINY, state["p"], center);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(w / 2, h * 0.25, Graphics.FONT_SMALL, state["s"], center);
+        dc.drawText(w / 2, h * 0.25,Graphics.FONT_SMALL, state["s"], center);
 
         // A pattern step counts rows within the repeat; every other step counts toward its own target.
         var count = isPattern ? state["row"] : state["prog"];
@@ -125,6 +145,21 @@ class CounterView extends WatchUi.View {
             dc.setColor(Graphics.COLOR_RED, Graphics.COLOR_TRANSPARENT);
             dc.drawText(w / 2, h * 0.92, Graphics.FONT_XTINY, WatchUi.loadResource(Rez.Strings.NoPhone), center);
         }
+    }
+
+    // The time of day above the step name, in the watch's 12 or 24 hour format.
+    private function drawClock(dc as Graphics.Dc, w as Number, h as Number) as Void {
+        var time = System.getClockTime();
+        var hour = time.hour;
+        if (!System.getDeviceSettings().is24Hour) {
+            hour = hour % 12;
+            if (hour == 0) {
+                hour = 12;
+            }
+        }
+        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(w / 2, h * 0.12, Graphics.FONT_SMALL, hour.format("%d") + ":" + time.min.format("%02d"),
+            Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Labels on the screen next to the buttons: START (top right) and BACK (bottom right) on the right side,
