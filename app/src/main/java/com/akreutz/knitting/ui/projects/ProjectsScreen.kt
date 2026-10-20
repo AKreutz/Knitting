@@ -23,6 +23,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Button
@@ -30,6 +31,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -258,22 +261,39 @@ internal fun ProjectCard(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
-                if (onDuplicateClick != null) {
-                    IconButton(onClick = onDuplicateClick) {
-                        Icon(
-                            Icons.Filled.ContentCopy,
-                            contentDescription = stringResource(R.string.duplicate_project),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                if (onEditClick != null && project.status != ProjectStatus.Finished) {
-                    IconButton(onClick = onEditClick) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = stringResource(R.string.edit_project_title),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                val canEdit = onEditClick != null && project.status != ProjectStatus.Finished
+                if (canEdit || onDuplicateClick != null) {
+                    var menuExpanded by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(
+                                Icons.Filled.MoreVert,
+                                contentDescription = stringResource(R.string.project_actions),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            if (canEdit) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.edit_project_title)) },
+                                    leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onEditClick?.invoke()
+                                    },
+                                )
+                            }
+                            if (onDuplicateClick != null) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.duplicate_project)) },
+                                    leadingIcon = { Icon(Icons.Filled.ContentCopy, contentDescription = null) },
+                                    onClick = {
+                                        menuExpanded = false
+                                        onDuplicateClick()
+                                    },
+                                )
+                            }
+                        }
                     }
                 }
                 StatusChip(status = project.status)

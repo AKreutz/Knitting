@@ -37,9 +37,9 @@ Every project moves through three states:
 3. Add steps with **Add step** (see below). You can also add them later by editing the project.
 4. Tap **Add**.
 
-The new project appears as a card in the *Created* state. Tap the pencil icon on a card to edit its name, description and steps, or to delete the project.
+The new project appears as a card in the *Created* state. Open the menu (the three-dot icon) on a card and choose **Edit project** to change its name, description and steps, or to delete the project.
 
-Tap the copy icon on any card, including a finished one, to duplicate the project. The copy is named "… (copy)" and starts in the *Created* state with the same steps and pattern grids and no progress.
+Choose **Duplicate project** in the same menu, on any card including a finished one, to copy the project. The copy is named "… (copy)" and starts in the *Created* state with the same steps and pattern grids and no progress.
 
 <br clear="right">
 
