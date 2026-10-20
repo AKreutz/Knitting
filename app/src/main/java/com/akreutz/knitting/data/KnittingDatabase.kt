@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.RoomDatabase.JournalMode
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
@@ -40,6 +41,8 @@ abstract class KnittingDatabase : RoomDatabase() {
                     // Only versions before 19 are wiped; from 19 on, schema changes need a migration.
                     .fallbackToDestructiveMigrationFrom(true, *IntArray(18) { it + 1 })
                     .addMigrations(MIGRATION_19_20, MIGRATION_20_21)
+                    // Auto Backup copies only knitting.db, so keep all data in that one file (no WAL).
+                    .setJournalMode(JournalMode.TRUNCATE)
                     .build()
                     .also { instance = it }
             }

@@ -93,7 +93,7 @@ Tap **Save** when you are done. The saved grid shows which colors it uses.
 
 **Reset** takes a project back to *Created* and clears its step progress. You can then plan or restart it.
 
-Your projects are stored only on your phone. There is no account, no sync and no network access.
+Your projects are stored on your phone. There is no account, no sync and no network access. Android's own backup (Google Drive backup and phone-to-phone transfer) includes your projects, so they come back when you restore or set up a new phone. The watch setting is not backed up.
 
 ## Garmin watch
 
@@ -200,6 +200,8 @@ The counting rules, such as clamping, pattern row rollover and how far a tap mov
 ### Data
 
 Projects and steps are stored in a local Room database. Schema changes need a real migration: bump the `version` in `KnittingDatabase`, add a `Migration` for the new version and register it with `addMigrations`. Only databases from before version 19 are still wiped on upgrade.
+
+Android Auto Backup saves only `knitting.db` (see `res/xml/backup_rules.xml` and `data_extraction_rules.xml`), so the database uses the `TRUNCATE` journal mode to keep all data in that one file. A restored backup can be older than the installed app, which the migrations handle. Keep both rules files in sync with the database name. To test, run `adb shell bmgr backupnow com.akreutz.knitting` and `adb shell bmgr restore` on an emulator.
 
 ### Screenshots
 
