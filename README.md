@@ -39,6 +39,8 @@ Every project moves through three states:
 
 The new project appears as a card in the *Created* state. Tap the pencil icon on a card to edit its name, description and steps, or to delete the project.
 
+Tap the copy icon on any card, including a finished one, to duplicate the project. The copy is named "… (copy)" and starts in the *Created* state with the same steps and pattern grids and no progress.
+
 <br clear="right">
 
 <p align="center">

@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Checkroom
 import androidx.compose.material3.AssistChipDefaults
@@ -55,6 +56,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -76,6 +78,7 @@ fun ProjectsScreen(
     onProjectStarted: () -> Unit = {},
     viewModel: ProjectsViewModel = viewModel(),
 ) {
+    val resources = LocalResources.current
     val projects by viewModel.projects.collectAsState()
     val stepsByProject by viewModel.stepsByProject.collectAsState()
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
@@ -92,6 +95,9 @@ fun ProjectsScreen(
         onAddClick = { showAddDialog = true },
         onProjectStartClick = { projectToStartId = it.id },
         onProjectEditClick = { projectToEditId = it.id },
+        onProjectDuplicateClick = {
+            viewModel.duplicateProject(it, resources.getString(R.string.project_copy_name, it.name))
+        },
         onPatternCellsChange = viewModel::setPatternCells,
         onCopyGrid = viewModel::copyPatternGrid,
         modifier = modifier,
@@ -157,6 +163,7 @@ private fun ProjectsContent(
     onAddClick: () -> Unit,
     onProjectStartClick: (Project) -> Unit,
     onProjectEditClick: (Project) -> Unit,
+    onProjectDuplicateClick: (Project) -> Unit,
     onPatternCellsChange: (Step, String) -> Unit,
     onCopyGrid: (Step, Step) -> Unit,
     modifier: Modifier = Modifier,
@@ -193,6 +200,7 @@ private fun ProjectsContent(
                         onCopyGrid = onCopyGrid,
                         onStartClick = { onProjectStartClick(project) },
                         onEditClick = { onProjectEditClick(project) },
+                        onDuplicateClick = { onProjectDuplicateClick(project) },
                     )
                 }
             }
@@ -228,6 +236,7 @@ internal fun ProjectCard(
     steps: List<Step> = emptyList(),
     onStartClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
+    onDuplicateClick: (() -> Unit)? = null,
     onPatternCellsChange: ((Step, String) -> Unit)? = null,
     onCopyGrid: ((target: Step, source: Step) -> Unit)? = null,
 ) {
@@ -249,6 +258,15 @@ internal fun ProjectCard(
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f),
                 )
+                if (onDuplicateClick != null) {
+                    IconButton(onClick = onDuplicateClick) {
+                        Icon(
+                            Icons.Filled.ContentCopy,
+                            contentDescription = stringResource(R.string.duplicate_project),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
                 if (onEditClick != null && project.status != ProjectStatus.Finished) {
                     IconButton(onClick = onEditClick) {
                         Icon(
@@ -449,6 +467,7 @@ private fun ProjectsContentPreview() {
             onAddClick = {},
             onProjectStartClick = {},
             onProjectEditClick = {},
+            onProjectDuplicateClick = {},
             onPatternCellsChange = { _, _ -> },
             onCopyGrid = { _, _ -> },
         )

@@ -15,6 +15,9 @@ interface ProjectDao {
     @Query("SELECT * FROM steps ORDER BY id")
     fun observeAllSteps(): Flow<List<Step>>
 
+    @Query("SELECT * FROM steps WHERE projectId = :projectId ORDER BY id")
+    suspend fun getSteps(projectId: Long): List<Step>
+
     @Insert
     suspend fun insert(project: Project): Long
 

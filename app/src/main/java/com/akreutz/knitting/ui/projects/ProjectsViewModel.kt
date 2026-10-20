@@ -135,6 +135,17 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** Adds a new Created project named [name] with [project]'s description and a fresh copy of its steps. */
+    fun duplicateProject(project: Project, name: String) {
+        viewModelScope.launch {
+            val copyId = dao.insert(Project(name = name, description = project.description))
+            // Counters start over; the charted grids are kept.
+            dao.getSteps(project.id).forEach {
+                dao.insertStep(it.copy(id = 0, projectId = copyId, progress = 0, patternRow = 0))
+            }
+        }
+    }
+
     fun addProject(name: String, description: String, steps: List<NewStep> = emptyList()) {
         val trimmedName = name.trim()
         if (trimmedName.isEmpty()) return
