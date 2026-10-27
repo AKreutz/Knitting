@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Knitting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600&display=swap">
+<style>
+  /* The app's warm wool palette: cream surfaces, terracotta primary, sage secondary. */
+  :root {
+    --cream: #FBF5EC; --oatmeal: #F3E9DA; --oatmeal-dark: #F0E4D2; --oatmeal-light: #F7EEE0;
+    --terracotta: #A8482B; --sage: #55664A; --sage-light: #DCE3D0;
+    --espresso: #2B2018; --taupe: #6B5A4B; --outline: #D9CBB8;
+    --serif: Fraunces, Georgia, "Times New Roman", serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--cream); color: var(--espresso); font: 16px/1.5 Roboto, system-ui, sans-serif; }
+  header { position: sticky; top: 0; z-index: 1; background: var(--oatmeal-dark); padding: 20px 16px; }
+  header h1 { max-width: 560px; margin: 0 auto; font: 400 1.5rem/1.3 var(--serif); }
+  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+
+  .card { position: relative; background: var(--oatmeal); border-radius: 12px; padding: 16px 16px 16px 22px; overflow: hidden; }
+  .card::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 6px; background: var(--sage); }
+  .card h2 { margin: 0; font: 400 1.375rem/1.3 var(--serif); overflow-wrap: anywhere; }
+  .desc { margin: 4px 0 0; color: var(--taupe); }
+  .overall { height: 4px; margin-top: 12px; background: var(--sage-light); border-radius: 2px; overflow: hidden; }
+  .overall > i { display: block; height: 100%; background: var(--sage); border-radius: 2px; transition: width .3s; }
+  .summary { margin: 4px 0 0; font-size: .75rem; color: var(--taupe); }
+
+  details { margin-top: 4px; }
+  summary { display: flex; align-items: center; justify-content: space-between; min-height: 48px; cursor: pointer;
+            color: var(--taupe); font-weight: 500; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: ""; width: 8px; height: 8px; margin: 0 8px; border: solid var(--taupe); border-width: 0 2px 2px 0;
+                   transform: rotate(45deg); transition: transform .2s; }
+  details[open] > summary::after { transform: rotate(-135deg); }
+
+  /* A step in the previous and next lists, like the app's step rows. */
+  .srow { padding: 8px 0 0; }
+  .shead { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; border-radius: 8px; }
+  .shead:focus-visible { outline: 2px solid var(--sage); outline-offset: 2px; }
+  .shead .name { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
+  .shead .name small { display: block; font-weight: 400; font-size: .875rem; color: var(--taupe); }
+  .icon { flex: none; width: 24px; height: 24px; }
+  .ball.plain { width: 34px; height: 34px; padding: 2px; background: none; }
+  .chevron { flex: none; width: 8px; height: 8px; margin: 0 8px; border: solid var(--taupe); border-width: 0 2px 2px 0;
+             transform: rotate(45deg); transition: transform .2s; }
+  .srow.open .chevron { transform: rotate(-135deg); }
+  .sbody { display: none; padding: 8px 0 4px; flex-direction: column; gap: 8px; }
+  .srow.open .sbody { display: flex; }
+  .sbody .text { margin: 0; }
+  .sbody .counter { margin: 0; }
+  .sbody .gridwrap { margin: 0; border: 1px solid var(--outline); }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { background: var(--oatmeal-dark); border-radius: 8px; padding: 4px 12px; }
+  .chip small { display: block; font-size: .6875rem; color: var(--taupe); }
+  .sbody button { border: 1px solid var(--outline); }
+  /* The current step: split diagonally into the two colors, like the app's panel. */
+  .panel { margin-top: 12px; padding: 12px; border-radius: 12px; color: #fff;
+           background: linear-gradient(to top right, var(--sage) 50%, var(--terracotta) 50%); }
+  .panel .top { display: flex; align-items: center; gap: 8px; }
+  .panel .top > div { flex: 1; min-width: 0; }
+  .panel .details { font-size: .875rem; }
+  .ball { flex: none; width: 38px; height: 38px; padding: 4px; background: var(--oatmeal-light); border-radius: 10px; }
+  .ball svg { display: block; width: 100%; height: 100%; }
+  .gridwrap { margin-top: 8px; padding: 8px 8px 4px; background: var(--cream); border-radius: 8px; color: var(--espresso); }
+  .gridwrap svg { display: block; margin: 0 auto; width: 100%; height: auto; }
+  .gridwrap .used { display: flex; justify-content: center; gap: 4px; padding: 4px 0; }
+  .gridwrap .used i { width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--taupe); }
+  .panel .label { font-size: .6875rem; letter-spacing: .5px; text-transform: uppercase; }
+  .panel h3 { margin: 0; font: 600 1.25rem/1.4 var(--serif); overflow-wrap: anywhere; }
+  .panel .bar { height: 4px; margin-top: 8px; background: rgba(255,255,255,.3); border-radius: 2px; overflow: hidden; }
+  .panel .bar > i { display: block; height: 100%; background: #fff; border-radius: 2px; transition: width .3s; }
+  .counter { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .count { font: 600 1.25rem/1.4 var(--serif); }
+  .btns { display: flex; gap: 8px; margin-left: auto; }
+  .done-all { display: flex; align-items: center; gap: 8px; font: 600 1.25rem/1.4 var(--serif); }
+
+  button { font: 500 1rem var(--serif); min-width: 88px; height: 52px; border: 0; border-radius: 26px; cursor: pointer;
+           background: var(--oatmeal-light); color: var(--espresso); transition: transform .1s, opacity .2s; }
+  button:active:not(:disabled) { transform: scale(.96); }
+  button:disabled { opacity: .35; cursor: default; }
+
+  .note { margin: 0 0 12px; color: var(--taupe); }
+  .empty { text-align: center; color: var(--taupe); padding: 48px 0; }
+  form { display: flex; gap: 8px; margin-bottom: 12px; }
+  [hidden] { display: none !important; }
+  input { font: inherit; width: 8em; padding: 0 16px; height: 48px; border-radius: 24px; border: 1px solid var(--outline);
+          background: var(--oatmeal-light); color: var(--espresso); }
+  form button { background: var(--terracotta); color: #fff; min-width: 72px; height: 48px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <!-- The app's two-tone icon fill: terracotta in the upper right, sage in the lower left. -->
+    <linearGradient id="duotone" gradientUnits="userSpaceOnUse" x1="24" y1="0" x2="0" y2="24">
+      <stop offset="0" stop-color="#A8482B"/><stop offset=".5" stop-color="#A8482B"/>
+      <stop offset=".5" stop-color="#55664A"/><stop offset="1" stop-color="#55664A"/>
+    </linearGradient>
+  </defs>
+</svg>
+<header><h1 id="title"></h1></header>
+<main>
+  <form id="pinForm" hidden>
+    <input id="pin" inputmode="numeric" autocomplete="off" placeholder="PIN">
+    <button type="submit">OK</button>
+  </form>
+  <p class="note" id="msg"></p>
+  <div id="content"></div>
+</main>
+<script>
+const de = (navigator.language || '').startsWith('de');
+const T = de ? {
+  title: 'In Arbeit', none: 'Keine Projekte in Arbeit.', pin: 'PIN vom Handy eingeben:', offline: 'Keine Verbindung zum Handy.',
+  current: 'Aktueller Schritt', allDone: 'Alle Schritte erledigt', prev: n => 'Vorherige Schritte (' + n + ')',
+  next: n => 'Nächste Schritte (' + n + ')', summary: (a, b) => a + ' von ' + b + ' Schritten erledigt',
+  types: { CastOn: 'Anschlag', Increases: 'Zunahmen', Decreases: 'Abnahmen', PlainRows: 'Glatte Reihen', Pattern: 'Muster', Special: 'Spezial' },
+  units: { CastOn: 'Maschen', Increases: 'Zunahmen', Decreases: 'Abnahmen', PlainRows: 'Reihen', Pattern: 'Wiederholungen' },
+  rowPatterns: { AllKnit: 'Alle rechts', AllPurl: 'Alle links', Ribbing1x1: '1 re, 1 li', Ribbing2x2: '2 re, 2 li' },
+  detail: { method: 'Methode', needle: 'Nadelstärke', shaping: 'Muster' }, patternType: 'Mustertyp', rowPattern: 'Muster',
+  patternTypes: { Cables: 'Zopfmuster', Colorwork: 'Farbmuster' }, count: 'Anzahl', length: 'Länge',
+  rows: 'Reihen', cm: 'cm', markDone: 'Erledigt', undo: 'Zurück', add: 'Hinzufügen', remove: 'Abziehen', decimal: ','
+} : {
+  title: 'In progress', none: 'No projects in progress.', pin: 'Enter the PIN shown on the phone:', offline: 'Cannot reach the phone.',
+  current: 'Current step', allDone: 'All steps done', prev: n => 'Previous steps (' + n + ')',
+  next: n => 'Next steps (' + n + ')', summary: (a, b) => a + ' of ' + b + ' steps done',
+  types: { CastOn: 'Cast-on', Increases: 'Increases', Decreases: 'Decreases', PlainRows: 'Plain rows', Pattern: 'Pattern', Special: 'Special' },
+  units: { CastOn: 'stitches', Increases: 'increases', Decreases: 'decreases', PlainRows: 'rows', Pattern: 'repeats' },
+  rowPatterns: { AllKnit: 'All knit', AllPurl: 'All purl', Ribbing1x1: '1K1P', Ribbing2x2: '2K2P' },
+  detail: { method: 'Method', needle: 'Needle size', shaping: 'Pattern' }, patternType: 'Pattern type', rowPattern: 'Pattern',
+  patternTypes: { Cables: 'Cables', Colorwork: 'Colorwork' }, count: 'Count', length: 'Length',
+  rows: 'rows', cm: 'cm', markDone: 'Done', undo: 'Undo', add: 'Add', remove: 'Subtract', decimal: '.'
+};
+document.documentElement.lang = de ? 'de' : 'en';
+document.title = 'Knitting';
+const $ = id => document.getElementById(id);
+$('title').textContent = T.title;
+
+let pin = new URLSearchParams(location.search).get('pin');
+try { if (pin) localStorage.setItem('pin', pin); else pin = localStorage.getItem('pin'); } catch (e) {}
+let busy = false;
+let last = '';
+const open = { prev: false, next: false };
+
+const show = msg => { $('msg').textContent = msg || ''; $('msg').hidden = !msg; };
+
+function ask() { $('pinForm').hidden = false; show(T.pin); $('pin').focus(); }
+
+async function call(path, options) {
+  const response = await fetch(path, Object.assign({ headers: { 'X-Pin': pin || '' }, cache: 'no-store' }, options));
+  if (response.status === 401) { ask(); return null; }
+  if (!response.ok) throw new Error(response.status);
+  $('pinForm').hidden = true;
+  return response.json();
+}
+
+const el = (tag, className, text) => {
+  const e = document.createElement(tag);
+  if (className) e.className = className;
+  if (text !== undefined) e.textContent = text;
+  return e;
+};
+
+// Millimeters are shown as centimeters, as in the app.
+const num = (step, value) => step.cm ? String(value / 10).replace('.', T.decimal) : String(value);
+const isPattern = step => step.type === 'Pattern';
+
+function countText(step) {
+  if (step.type === 'Special') return step.prog ? '✓' : '–';
+  return num(step, step.prog) + ' / ' + num(step, step.max) + ' ' + (step.cm ? T.cm : T.units[step.type]);
+}
+
+function button(label, aria, disabled, step, delta) {
+  const b = el('button', '', label);
+  b.type = 'button';
+  b.setAttribute('aria-label', aria);
+  b.disabled = disabled;
+  b.onclick = () => tap(step.id, delta);
+  return b;
+}
+
+// The buttons of a step: one tap moves a row on a pattern, otherwise what the + and - buttons of the app move.
+function buttons(step) {
+  const wrap = el('span', 'btns');
+  if (step.type === 'Special') {
+    wrap.append(step.prog ? button(T.undo, T.undo, false, step, -1) : button(T.markDone, T.markDone, false, step, 1));
+    return wrap;
+  }
+  const dec = isPattern(step) ? 1 : step.dec, inc = isPattern(step) ? 1 : step.inc;
+  const label = n => step.cm && !isPattern(step) ? num(step, n) : String(n);
+  const minusOff = isPattern(step) ? !step.cm && step.prog === 0 && step.row === 0 : step.prog === 0;
+  const plusOff = isPattern(step) && step.cm ? false : step.prog >= step.max;
+  wrap.append(
+    button('−' + label(dec), T.remove, minusOff, step, -1),
+    button('+' + label(inc), T.add, plusOff, step, 1));
+  return wrap;
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+const svgEl = (tag, attrs) => {
+  const e = document.createElementNS(SVG, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+};
+
+// What the step's type adds to its name: the row pattern, the entered details and, if there is no yarn ball, the color.
+function detailLine(step, withColor) {
+  return [step.rowPattern && T.rowPatterns[step.rowPattern], ...(step.details || []).map(d => d.v), withColor ? step.color : null]
+    .filter(Boolean).join(' · ');
+}
+
+// The app's yarn ball with its needles, tinted with the yarn's shade.
+function yarnBall(shade) {
+  const mix = (hex, f) => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.substr(i, 2), 16) * (1 - f)).toString(16).padStart(2, '0')).join('');
+  const linear = c => c <= .04045 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4);
+  const lum = [1, 3, 5].map(i => linear(parseInt(shade.substr(i, 2), 16) / 255)).reduce((a, c, i) => a + c * [.2126, .7152, .0722][i], 0);
+  const outline = mix(shade, .4);
+  const strands = lum < .2 ? '#F7EEE0' : outline;
+  const box = el('span', 'ball');
+  box.innerHTML =
+    '<svg viewBox="0 0 260 260" aria-hidden="true"><g transform="translate(30 1.5)">' +
+    '<path d="M20.89,194.16l-12.09,12.1 -8.67,19.08c-0.33,0.73 -0.01,1.59 0.72,1.92 0.38,0.17 0.82,0.17 1.2,0l19.08,-8.67 11.79,-11.79z"/>' +
+    '<path fill="#bdb8b0" d="M17.76,213.75L10.29,217.14c-0.01,0 -0.03,0 -0.03,-0.02 0,0 0,-0.01 0,-0.02l3.39,-7.47 10.96,-10.96c1.28,1.45 2.62,2.86 4.01,4.22z"/>' +
+    '<path d="M51.18,218.52l-6.53,15.78 -0.71,20.94c-0.03,0.8 0.6,1.48 1.4,1.5 0.42,0.01 0.83,-0.15 1.12,-0.46l14.3,-15.32 6.97,-16.82z"/>' +
+    '<path fill="#bdb8b0" d="M55.79,237.79L50.19,243.78c-0.01,0.01 -0.03,0.01 -0.04,0 -0.01,-0.01 -0.01,-0.02 -0.01,-0.03l0.29,-8.2 6.1,-14.77c1.81,0.69 3.65,1.32 5.52,1.89z"/>' +
+    '<path d="M143.8,15.5L117,80" stroke="#000" stroke-width="17.6" fill="none"/>' +
+    '<path d="M143.8,15.5L118.9,75.6" stroke="#bdb8b0" stroke-width="6.2" fill="none"/>' +
+    '<circle cx="143.8" cy="15.5" r="15.5"/><circle cx="143.8" cy="15.5" r="8.2" fill="#b8923a"/>' +
+    '<circle cx="85.8" cy="144.5" r="81.5" fill="' + shade + '"/>' +
+    '<clipPath id="ballClip"><circle cx="85.8" cy="144.5" r="78"/></clipPath>' +
+    '<path clip-path="url(#ballClip)" fill="' + strands + '" stroke="' + strands + '" stroke-width="6" stroke-linejoin="round" fill-rule="evenodd" ' +
+    'd="M4.3,144.5a81.5,81.5 0 1,0 163,0a81.5,81.5 0 1,0 -163,0zM104.86,71.72C69.35,112.09 57.44,168.03 73.41,219.36c-12.21,-1.98 -23.75,-6.95 -33.58,-14.46 -4.91,-21.94 -4.93,-44.7 -0.07,-66.66 5.54,-25.21 17.3,-48.64 34.2,-68.15 10.3,-1.59 20.82,-1.04 30.9,1.63zM64.7,72.15c-14.95,19.03 -25.41,41.19 -30.61,64.83 -4.5,20.27 -4.99,41.23 -1.44,61.69 -29.79,-29.17 -30.3,-76.96 -1.13,-106.76 9.16,-9.35 20.59,-16.17 33.18,-19.77zM79.79,220.09c-8.45,-25.26 -9.85,-52.35 -4.07,-78.36 0.61,-2.77 1.31,-5.5 2.06,-8.21 18.93,18.09 32.17,41.31 38.08,66.82 0.97,4.15 1.72,8.37 2.32,12.58 -10.19,4.9 -21.35,7.43 -32.65,7.41 -1.93,0 -3.84,-0.1 -5.74,-0.24zM123.6,210c-0.58,-3.68 -1.23,-7.36 -2.09,-10.99 -6.4,-27.57 -21,-52.56 -41.87,-71.67 3.38,-10.36 7.9,-20.31 13.47,-29.67 27.48,19.39 46.89,48.18 54.56,80.93 0.54,2.31 1.01,4.65 1.43,6.97 -6.46,10.03 -15.19,18.41 -25.49,24.44zM153.47,177.79c0,0.02 -0.03,0.02 -0.04,0 -0.2,-0.69 -0.29,-1.29 -0.38,-1.64 -8.2,-33.79 -28.42,-63.43 -56.87,-83.41 4.4,-6.76 9.36,-13.15 14.82,-19.09 6.98,2.54 13.56,6.09 19.51,10.54l12.91,12.05c18.92,22.51 23.03,53.97 10.52,80.59 -0.11,0.24 -0.13,0.31 -0.47,0.95z"/>' +
+    '<circle cx="85.8" cy="144.5" r="77.5" fill="none" stroke="' + outline + '" stroke-width="13"/>' +
+    '<path d="M182.8,44.2L133.5,92.6" stroke="#000" stroke-width="17.6" stroke-linecap="round" fill="none"/>' +
+    '<path d="M182.8,44.2L134.5,91.7" stroke="#bdb8b0" stroke-width="6.2" stroke-linecap="round" fill="none"/>' +
+    '<circle cx="182.8" cy="44.2" r="15.5"/><circle cx="182.8" cy="44.2" r="8.2" fill="#b8923a"/>' +
+    '</g></svg>';
+  return box;
+}
+
+// The pattern grid like the app draws it: rows numbered from the bottom, columns from the right, heavier lines on every
+// 5th and 10th, the rows already knitted (the bottom ones) dimmed in colorwork and inverted in cables.
+const PALETTE = [null, '#B5493B', '#E0A526', '#6E8B5B'];
+function patternGrid(step) {
+  const rows = step.rows, cols = step.cols, C = 40, gutter = 8 * String(rows).length + 12, labelH = 18;
+  const cables = step.ptype === 'Cables';
+  const cells = step.cells || '0'.repeat(rows * cols);
+  const width = gutter + cols * C, height = rows * C + labelH;
+  const scale = Math.min(1, (($('content').clientWidth || 560) - 56) / width);
+  const cellPx = C * scale;
+  const labelStep = cellPx >= 22 ? 1 : cellPx >= 11 ? 5 : 10;
+  const svg = svgEl('svg', { viewBox: '0 0 ' + width + ' ' + height, role: 'img', 'aria-hidden': 'true' });
+  svg.style.maxWidth = width + 'px';
+  const ink = '#2B2018', empty = '#FBF5EC';
+  const done = r => r >= rows - step.row;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const v = +cells[r * cols + c], x = gutter + c * C, y = r * C;
+      let fill = empty;
+      if (cables) fill = done(r) ? ink : empty; else if (PALETTE[v]) fill = PALETTE[v];
+      svg.append(svgEl('rect', { x, y, width: C, height: C, fill }));
+      if (!cables && done(r)) svg.append(svgEl('rect', { x, y, width: C, height: C, fill: 'rgba(0,0,0,.5)' }));
+      if (cables && v < 2) {
+        const color = done(r) ? empty : ink, cx = x + C / 2, cy = y + C / 2, i = C * .32;
+        if (v === 1) svg.append(svgEl('circle', { cx, cy, r: C * .08, fill: color }));
+        else svg.append(svgEl('polyline', {
+          points: (x + i) + ',' + (y + i) + ' ' + cx + ',' + (y + C - i) + ' ' + (x + C - i) + ',' + (y + i),
+          fill: 'none', stroke: color, 'stroke-width': C * .07, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+        }));
+      }
+    }
+  }
+  const weight = (b, count) => b === 0 || b === count || (count - b) % 10 === 0 ? 3 : (count - b) % 5 === 0 ? 1.5 : .5;
+  for (const w of [.5, 1.5, 3]) {
+    const stroke = w === .5 ? 'rgba(217,203,184,.6)' : 'rgba(107,90,75,.6)';
+    for (let c = 0; c <= cols; c++) if (weight(c, cols) === w)
+      svg.append(svgEl('line', { x1: gutter + c * C, y1: 0, x2: gutter + c * C, y2: rows * C, stroke, 'stroke-width': w }));
+    for (let r = 0; r <= rows; r++) if (weight(r, rows) === w)
+      svg.append(svgEl('line', { x1: gutter, y1: r * C, x2: gutter + cols * C, y2: r * C, stroke, 'stroke-width': w }));
+  }
+  if (cables) {
+    // A run of neighboring cells with the same cross shares one diagonal, from corner to corner.
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols;) {
+        const v = +cells[r * cols + c];
+        if (v < 2) { c++; continue; }
+        let e = c;
+        while (e + 1 < cols && +cells[r * cols + e + 1] === v) e++;
+        const x1 = gutter + c * C, x2 = gutter + (e + 1) * C, y = r * C;
+        svg.append(svgEl('line', {
+          x1, x2, y1: v === 2 ? y : y + C, y2: v === 2 ? y + C : y,
+          stroke: done(r) ? empty : ink, 'stroke-width': C * .07
+        }));
+        c = e + 1;
+      }
+    }
+  }
+  const font = 10 / scale;
+  const label = (text, x, y, anchor) => {
+    const t = svgEl('text', { x, y, 'text-anchor': anchor, 'dominant-baseline': 'central', 'font-size': font, fill: '#6B5A4B' });
+    t.textContent = text;
+    svg.append(t);
+  };
+  for (let r = 0; r < rows; r++) if ((rows - r) % labelStep === 0) label(rows - r, gutter - 4 / scale, r * C + C / 2, 'end');
+  for (let c = 0; c < cols; c++) if ((cols - c) % labelStep === 0) label(cols - c, gutter + c * C + C / 2, rows * C + labelH / 2, 'middle');
+
+  const wrap = el('div', 'gridwrap');
+  wrap.append(svg);
+  // A colorwork grid also shows which colors it uses.
+  const used = PALETTE.map((color, i) => color && cells.includes(i) ? color : null).filter(Boolean);
+  if (!cables && used.length) {
+    const dots = el('div', 'used');
+    for (const color of used) { const dot = el('i'); dot.style.background = color; dots.append(dot); }
+    wrap.append(dots);
+  }
+  return wrap;
+}
+
+function currentPanel(step) {
+  const panel = el('section', 'panel');
+  // A yarn color the app has a shade for is shown as a ball, any other is written in the details.
+  const shade = /^#[0-9a-f]{6}$/i.test(step.shade || '') ? step.shade : null;
+  const top = el('div', 'top'), heading = el('div');
+  heading.append(el('div', 'label', T.current), el('h3', '', step.name + ' · ' + T.types[step.type]));
+  const details = detailLine(step, !shade);
+  if (details) heading.append(el('div', 'details', details));
+  top.append(heading);
+  if (shade) { const ball = yarnBall(shade); ball.title = step.color; top.append(ball); }
+  panel.append(top);
+  if (step.type !== 'Special') {
+    const bar = el('div', 'bar'), fill = el('i');
+    fill.style.width = (step.max ? Math.min(100, step.prog / step.max * 100) : 0) + '%';
+    bar.append(fill);
+    panel.append(bar);
+  }
+  appendCounters(panel, step);
+  return panel;
+}
+
+// The step's count with its buttons and, for a pattern, its chart and row counter.
+function appendCounters(parent, step) {
+  const counter = el('div', 'counter');
+  if (isPattern(step)) {
+    // The repeats are counted by finishing their rows, so the buttons below move a row.
+    counter.append(el('span', 'count', countText(step)));
+    parent.append(counter);
+    if (step.cols && step.rows) parent.append(patternGrid(step));
+    const rows = el('div', 'counter');
+    rows.append(el('span', 'count', step.row + ' / ' + step.rows + ' ' + T.rows), buttons(step));
+    parent.append(rows);
+  } else {
+    counter.append(el('span', 'count', countText(step)), buttons(step));
+    parent.append(counter);
+  }
+}
+
+// The Material icons the app shows for the step types, split diagonally into the two colors like its DuotoneIcon.
+const ICONS = {
+  CastOn: 'M19.5 9.5c-1.03 0-1.9.62-2.29 1.5h-2.92c-.39-.88-1.26-1.5-2.29-1.5s-1.9.62-2.29 1.5H6.79c-.39-.88-1.26-1.5-2.29-1.5C3.12 9.5 2 10.62 2 12s1.12 2.5 2.5 2.5c1.03 0 1.9-.62 2.29-1.5h2.92c.39.88 1.26 1.5 2.29 1.5s1.9-.62 2.29-1.5h2.92c.39.88 1.26 1.5 2.29 1.5 1.38 0 2.5-1.12 2.5-2.5s-1.12-2.5-2.5-2.5z',
+  Increases: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z',
+  Decreases: 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11H7v-2h10v2z',
+  PlainRows: 'M3 15h18v-2H3v2zm0 4h18v-2H3v2zm0-8h18V9H3v2zm0-6v2h18V5H3z',
+  Pattern: 'M20 10V8h-4V4h-2v4h-4V4H8v4H4v2h4v4H4v2h4v4h2v-4h4v4h2v-4h4v-2h-4v-4h4zm-6 4h-4v-4h4v4z',
+  Special: 'M19 9l1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z'
+};
+function typeIcon(type) {
+  const svg = svgEl('svg', { viewBox: '0 0 24 24', 'aria-hidden': 'true', class: 'icon' });
+  svg.append(svgEl('path', { d: ICONS[type], fill: 'url(#duotone)' }));
+  return svg;
+}
+
+// What a step's body lists as chips: the kind of pattern or row pattern, the amount to reach and the entered details.
+function chips(step) {
+  const list = [];
+  if (isPattern(step)) { if (step.ptype) list.push([T.patternType, T.patternTypes[step.ptype]]); }
+  else if (step.rowPattern) list.push([T.rowPattern, T.rowPatterns[step.rowPattern]]);
+  if (step.type !== 'Special' && step.max) list.push([step.cm ? T.length : T.count, num(step, step.max) + ' ' + (step.cm ? T.cm : T.units[step.type])]);
+  for (const d of step.details || []) if (d.k !== 'description') list.push([T.detail[d.k], d.v]);
+  return list;
+}
+
+const expanded = new Set();
+
+// A step in the previous and next lists: icon, name, type and yarn color; tapping it opens its details, counter and chart.
+function stepRow(step) {
+  const shade = /^#[0-9a-f]{6}$/i.test(step.shade || '') ? step.shade : null;
+  const row = el('div', 'srow' + (expanded.has(step.id) ? ' open' : ''));
+  const head = el('div', 'shead');
+  head.tabIndex = 0;
+  head.setAttribute('role', 'button');
+  head.setAttribute('aria-expanded', expanded.has(step.id));
+  const toggle = () => {
+    if (expanded.has(step.id)) expanded.delete(step.id); else expanded.add(step.id);
+    row.classList.toggle('open');
+    head.setAttribute('aria-expanded', expanded.has(step.id));
+  };
+  head.onclick = toggle;
+  head.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+  const name = el('span', 'name', step.name);
+  name.append(el('small', '', [T.types[step.type], shade ? null : step.color].filter(Boolean).join(' · ')));
+  head.append(typeIcon(step.type), name);
+  if (shade) { const ball = yarnBall(shade); ball.className = 'ball plain'; ball.title = step.color; head.append(ball); }
+  head.append(el('span', 'chevron'));
+  row.append(head);
+
+  const body = el('div', 'sbody');
+  const description = (step.details || []).find(d => d.k === 'description');
+  if (description) body.append(el('p', 'text', description.v));
+  const items = chips(step);
+  if (items.length) {
+    const wrap = el('div', 'chips');
+    for (const [label, value] of items) {
+      const chip = el('div', 'chip');
+      chip.append(el('small', '', label), el('span', '', value));
+      wrap.append(chip);
+    }
+    body.append(wrap);
+  }
+  appendCounters(body, step);
+  row.append(body);
+  return row;
+}
+
+function allDonePanel() {
+  const panel = el('section', 'panel');
+  panel.append(el('div', 'done-all', '✓ ' + T.allDone));
+  return panel;
+}
+
+function group(key, title, steps) {
+  const d = el('details');
+  d.open = open[key];
+  d.ontoggle = () => { open[key] = d.open; };
+  d.append(el('summary', '', title));
+  for (const step of steps) d.append(stepRow(step));
+  return d;
+}
+
+function render(state) {
+  const content = $('content');
+  content.replaceChildren();
+  show('');
+  const steps = state.steps || [];
+  if (!state.project) {
+    content.append(el('p', 'empty', T.none));
+    return;
+  }
+  const card = el('div', 'card');
+  card.append(el('h2', '', state.project));
+  if (state.description) card.append(el('p', 'desc', state.description));
+  const doneCount = steps.filter(s => s.done).length;
+  if (state.progress !== null && steps.length) {
+    const bar = el('div', 'overall'), fill = el('i');
+    fill.style.width = Math.round(state.progress * 100) + '%';
+    bar.append(fill);
+    card.append(bar, el('p', 'summary', T.summary(doneCount, steps.length)));
+  }
+  // With every step done there is no current one, so all of them count as previous.
+  const allDone = steps.length > 0 && doneCount === steps.length;
+  const index = allDone ? steps.length : Math.max(0, steps.findIndex(s => s.current));
+  card.append(group('prev', T.prev(index), steps.slice(0, index)));
+  if (steps.length) card.append(allDone ? allDonePanel() : currentPanel(steps[index]));
+  card.append(group('next', T.next(Math.max(0, steps.length - index - 1)), steps.slice(index + 1)));
+  content.append(card);
+}
+
+// A poll is skipped while another request is in flight, but a tap always goes through so it is never lost.
+async function refresh(path, options) {
+  if (busy && !options) return;
+  busy = true;
+  try {
+    const state = await call(path, options);
+    if (state) {
+      const text = JSON.stringify(state);
+      // Leave the page alone when nothing changed, so buttons keep their hover and focus.
+      if (text !== last) { last = text; render(state); } else show('');
+    }
+  } catch (e) {
+    show(T.offline);
+  } finally {
+    busy = false;
+  }
+}
+
+function tap(stepId, delta) {
+  refresh('/api/step', {
+    method: 'POST',
+    headers: { 'X-Pin': pin || '', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'step=' + stepId + '&delta=' + delta
+  });
+}
+
+$('pinForm').onsubmit = event => {
+  event.preventDefault();
+  pin = $('pin').value.trim();
+  try { localStorage.setItem('pin', pin); } catch (e) {}
+  refresh('/api/state');
+};
+
+show('');
+// Removes the PIN from the address bar so it does not end up in history or screenshots.
+if (location.search) history.replaceState(null, '', location.pathname);
+refresh('/api/state');
+// Counters changed in the app show up here; skip while hidden to spare the phone's battery.
+setInterval(() => { if (!document.hidden && $('pinForm').hidden) refresh('/api/state'); }, 2000);
+</script>
+</body>
+</html>

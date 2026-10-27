@@ -58,6 +58,16 @@ fun currentCounter(projects: List<Project>, steps: List<Step>): CurrentCounter? 
     return CurrentCounter(project, step)
 }
 
+/** The project a remote control works on with all its counted steps, and the step that is current among them. */
+data class ActiveProject(val project: Project, val steps: List<Step>, val current: Step?)
+
+/** The most recent in-progress project, or null when there is none; see [currentCounter] for which step is current. */
+fun activeProject(projects: List<Project>, steps: List<Step>): ActiveProject? {
+    val project = projects.firstOrNull { it.status == ProjectStatus.InProgress } ?: return null
+    val counted = steps.filter { it.projectId == project.id && it.completedFraction() != null }
+    return ActiveProject(project, counted, currentCounter(projects, steps)?.step)
+}
+
 /**
  * The step a tap in direction [delta] changes: the current step, or, when counting back from the very start of it,
  * the counted step before it, which then becomes the current one again. Null when there is nothing to change.
@@ -78,6 +88,16 @@ class CounterRepository(private val dao: ProjectDao) {
     /** Moves the current step one tap in direction [delta], reading the database fresh so a stale caller can't misfire. */
     suspend fun stepCurrent(delta: Int) {
         val step = tapTarget(dao.observeAll().first(), dao.observeAllSteps().first(), delta) ?: return
+        val counter = step.counterAfterStepping(delta) ?: return
+        dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
+    }
+
+    /** The active project as a remote control shows it, read fresh from the database. */
+    suspend fun active(): ActiveProject? = activeProject(dao.observeAll().first(), dao.observeAllSteps().first())
+
+    /** Moves the step [stepId] of the active project one tap in direction [delta]; other steps are left alone. */
+    suspend fun stepStep(stepId: Long, delta: Int) {
+        val step = active()?.steps?.firstOrNull { it.id == stepId } ?: return
         val counter = step.counterAfterStepping(delta) ?: return
         dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
     }

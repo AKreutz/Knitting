@@ -4,8 +4,8 @@
     <string name="language_system_default">Systemstandard</string>
     <string name="language_english">English</string>
     <string name="language_german">Deutsch</string>
-    <string name="watch">Uhr</string>
-    <string name="watch_control">Zähler mit einer Garmin-Uhr steuern</string>
+    <string name="remote">Fernsteuerung</string>
+    <string name="remote_control">Zähler mit einer Garmin-Uhr oder einem Browser steuern</string>
     <string name="watch_channel">Garmin-Uhr</string>
     <string name="watch_notification_title">Garmin-Uhr-Steuerung</string>
     <string name="watch_status_off">Aus</string>
@@ -16,6 +16,13 @@
     <string name="watch_status_garmin_missing">Bitte zuerst die Garmin-Connect-App installieren</string>
     <string name="watch_status_garmin_outdated">Bitte die Garmin-Connect-App aktualisieren</string>
     <string name="watch_status_error">Verbindung zu Garmin Connect fehlgeschlagen</string>
+    <string name="web_channel">Browser-Zugriff</string>
+    <string name="web_notification_title">Browser-Zugriff</string>
+    <string name="web_notification_text">Zähler sind über Port %1$d erreichbar</string>
+    <string name="web_status_error">Server konnte nicht gestartet werden</string>
+    <string name="web_no_network">Nicht mit einem Netzwerk verbunden</string>
+    <string name="web_pin">PIN: %1$s</string>
+    <string name="web_new_pin">Neue PIN</string>
     <string name="nav_projects">Projekte</string>
     <string name="nav_in_progress">In Arbeit</string>
     <string name="projects_empty">Noch keine Projekte.</string>

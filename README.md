@@ -10,11 +10,12 @@ An Android app for planning knitting projects and keeping your place while you k
 
 - [Using the app](#using-the-app)
 - [Garmin watch](#garmin-watch)
+- [Browser access](#browser-access)
 - [Development](#development)
 
 ## Using the app
 
-The app has two tabs. **Projects** is where you plan, and **In progress** is where you knit. The globe icon in the top bar switches the language between English, German (Deutsch) and the system default. The watch icon next to it sets up the [Garmin watch](#garmin-watch) remote.
+The app has two tabs. **Projects** is where you plan, and **In progress** is where you knit. The globe icon in the top bar switches the language between English, German (Deutsch) and the system default. The remote-control icon next to it switches on the remote controls: the [Garmin watch](#garmin-watch) and [browser access](#browser-access).
 
 ### Life of a project
 
@@ -95,7 +96,7 @@ Tap **Save** when you are done. The saved grid shows which colors it uses.
 
 **Reset** takes a project back to *Created* and clears its step progress. You can then plan or restart it.
 
-Your projects are stored on your phone. There is no account, no sync and no network access. Android's own backup (Google Drive backup and phone-to-phone transfer) includes your projects, so they come back when you restore or set up a new phone. The watch setting is not backed up.
+Your projects are stored on your phone. There is no account and no sync, and the app only uses the network if you switch on [browser access](#browser-access). Android's own backup (Google Drive backup and phone-to-phone transfer) includes your projects, so they come back when you restore or set up a new phone. The watch setting is not backed up.
 
 ## Garmin watch
 
@@ -104,7 +105,7 @@ A Garmin Forerunner 745 can count for you, so you don't have to put your knittin
 ### Setting it up
 
 1. Install the watch app on the watch (see [Installing the watch app](#installing-the-watch-app)).
-2. In the Knitting app, tap the watch icon in the top bar and switch on **Control counters from a Garmin watch**. Android asks to show notifications; the app shows one while the remote is active.
+2. In the Knitting app, tap the remote-control icon in the top bar and switch on **Control counters from a Garmin watch or a browser**. Android asks to show notifications; the app shows one while the remote is active.
 3. The menu shows the state of the link: *Watch connected*, *Watch not in range*, *No paired Garmin watch found* or a hint to install or update Garmin Connect. If the link cannot recover, the app stops it and shows why.
 4. Open **Knitting** (**Stricken** in German) on the watch.
 
@@ -139,6 +140,17 @@ monkeyc -d fr745 -f monkey.jungle -o bin/KnittingCounter.prg -y <path to develop
 
 Then connect the watch over USB, copy `KnittingCounter.prg` into `GARMIN/Apps` on the watch and disconnect it. The watch loads the app when it is unplugged.
 
+## Browser access
+
+The counters of the project you are knitting can also be read and changed from a browser on another device, for example a laptop next to you.
+
+1. Tap the remote-control icon in the top bar and switch on **Control counters from a Garmin watch or a browser**. It is the same switch as for the watch.
+2. Open the address shown there (like `http://192.168.1.20:8765`) in a browser on the same Wi-Fi and enter the PIN shown below it.
+
+The page looks like the *In progress* tab: it lists every counted step of the most recent in-progress project, with + and − buttons that work like the ones in the app. The current step shows its yarn color, its details (such as needle size) and, for a pattern, the chart with the finished rows marked. Changes made in the app show up in the browser within a couple of seconds, and the other way around. **New PIN** locks out every browser that knew the old one.
+
+The server only runs while the switch is on, shows a notification while it does, and is reachable on the local network only. Anyone on that network who knows the PIN can change your counters, and the traffic is not encrypted, so use it at home and not on public Wi-Fi.
+
 ## Development
 
 ### Tech stack
@@ -159,7 +171,7 @@ app/src/main/java/com/akreutz/knitting/
 ├── watch/                 Garmin remote: message protocol, controller, Connect IQ link, foreground service
 └── ui/
     ├── KnittingApp.kt     Scaffold with the top bar and the two tabs
-    ├── WatchButton.kt     Top bar menu that switches the watch remote on and off
+    ├── RemoteControlButton.kt  Top bar menu that switches the watch and browser remotes on and off
     ├── navigation/        Tab destinations
     ├── projects/          Both screens, project and step cards, dialogs, pattern grid, view model
     └── theme/             Colors, typography and spacing

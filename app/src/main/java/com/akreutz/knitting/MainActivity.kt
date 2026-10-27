@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.akreutz.knitting.ui.KnittingApp
 import com.akreutz.knitting.ui.theme.KnittingTheme
 import com.akreutz.knitting.watch.WatchSettings
+import com.akreutz.knitting.web.WebSettings
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,6 +21,7 @@ class MainActivity : AppCompatActivity() {
         )
         // Android may have stopped the service since the last launch; opening the app brings it back.
         if (WatchSettings.isEnabled(this)) WatchSettings.apply(this)
+        if (WebSettings.isEnabled(this)) WebSettings.apply(this)
         setContent {
             KnittingTheme {
                 KnittingApp()

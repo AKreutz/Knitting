@@ -8,7 +8,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Watch
+import androidx.compose.material.icons.filled.SettingsRemote
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -29,20 +29,26 @@ import com.akreutz.knitting.R
 import com.akreutz.knitting.watch.WatchSettings
 import com.akreutz.knitting.watch.WatchStatus
 import com.akreutz.knitting.watch.labelRes
+import com.akreutz.knitting.web.WebConnection
+import com.akreutz.knitting.web.WebSettings
+import com.akreutz.knitting.web.WebStatus
 
-/** Top bar menu for letting a Garmin watch control the counters. */
+/** Top bar menu for letting a Garmin watch and a browser on the same network control the counters. */
 @Composable
-fun WatchButton() {
+fun RemoteControlButton() {
     val context = LocalContext.current
     var expanded by remember { mutableStateOf(false) }
-    var enabled by remember { mutableStateOf(WatchSettings.isEnabled(context)) }
-    val connection by WatchStatus.connection.collectAsState()
-    // The service runs either way; without the permission its notification is just hidden.
+    var enabled by remember { mutableStateOf(WatchSettings.isEnabled(context) || WebSettings.isEnabled(context)) }
+    var pin by remember { mutableStateOf(WebSettings.pin(context)) }
+    val watch by WatchStatus.connection.collectAsState()
+    val web by WebStatus.connection.collectAsState()
+    // The services run either way; without the permission their notifications are just hidden.
     val askForNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
 
     fun toggle() {
         enabled = !enabled
         WatchSettings.setEnabled(context, enabled)
+        WebSettings.setEnabled(context, enabled)
         if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
@@ -53,16 +59,16 @@ fun WatchButton() {
 
     Box {
         IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Filled.Watch, contentDescription = stringResource(R.string.watch))
+            Icon(Icons.Filled.SettingsRemote, contentDescription = stringResource(R.string.remote))
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = {
                     Column {
-                        Text(stringResource(R.string.watch_control))
+                        Text(stringResource(R.string.remote_control))
                         if (enabled) {
                             Text(
-                                stringResource(connection.labelRes()),
+                                stringResource(watch.labelRes()),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -72,6 +78,34 @@ fun WatchButton() {
                 trailingIcon = { Switch(checked = enabled, onCheckedChange = null) },
                 onClick = ::toggle,
             )
+            if (enabled) {
+                // Looked up each time the menu opens, as the phone may have joined another network since.
+                val address = remember(expanded) { WebSettings.localAddress() }
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                when {
+                                    web == WebConnection.Error -> stringResource(R.string.web_status_error)
+                                    address == null -> stringResource(R.string.web_no_network)
+                                    else -> "http://$address:${WebSettings.PORT}"
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Text(
+                                stringResource(R.string.web_pin, pin),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    onClick = {},
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.web_new_pin)) },
+                    onClick = { pin = WebSettings.newPin(context) },
+                )
+            }
         }
     }
 }

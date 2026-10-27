@@ -68,7 +68,7 @@ fun KnittingApp() {
             TopAppBar(
                 title = { Text(stringResource(current.label), style = MaterialTheme.typography.headlineSmall) },
                 actions = {
-                    WatchButton()
+                    RemoteControlButton()
                     LanguageButton()
                 },
                 scrollBehavior = scrollBehavior,

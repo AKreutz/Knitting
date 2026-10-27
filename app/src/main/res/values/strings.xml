@@ -4,8 +4,8 @@
     <string name="language_system_default">System default</string>
     <string name="language_english">English</string>
     <string name="language_german">Deutsch</string>
-    <string name="watch">Watch</string>
-    <string name="watch_control">Control counters from a Garmin watch</string>
+    <string name="remote">Remote control</string>
+    <string name="remote_control">Control counters from a Garmin watch or a browser</string>
     <string name="watch_channel">Garmin watch</string>
     <string name="watch_notification_title">Garmin watch control</string>
     <string name="watch_status_off">Off</string>
@@ -16,6 +16,13 @@
     <string name="watch_status_garmin_missing">Install the Garmin Connect app first</string>
     <string name="watch_status_garmin_outdated">Update the Garmin Connect app</string>
     <string name="watch_status_error">Could not connect to Garmin Connect</string>
+    <string name="web_channel">Browser access</string>
+    <string name="web_notification_title">Browser access</string>
+    <string name="web_notification_text">Counters are reachable on port %1$d</string>
+    <string name="web_status_error">Could not start the server</string>
+    <string name="web_no_network">Not connected to a network</string>
+    <string name="web_pin">PIN: %1$s</string>
+    <string name="web_new_pin">New PIN</string>
     <string name="nav_projects">Projects</string>
     <string name="nav_in_progress">In progress</string>
     <string name="projects_empty">No projects yet.</string>
