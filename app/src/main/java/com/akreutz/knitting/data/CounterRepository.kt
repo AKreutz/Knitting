@@ -10,13 +10,35 @@ data class StepCounter(val progress: Int, val patternRow: Int)
 
 /**
  * The counters after setting [progress] by hand, or null for steps without a counter.
- * Changing a pattern's repeat count restarts the row count within the repeat; centimeters are independent of the rows.
+ * Changing a pattern's repeat count or a shaping step's count restarts the row or round count; centimeters are
+ * independent of the rows.
  */
 fun Step.counterAfterSettingProgress(progress: Int): StepCounter? {
     val max = progressTarget() ?: return null
     val clamped = progress.coerceIn(0, max)
-    return StepCounter(clamped, if (usesPatternRows()) 0 else patternRow)
+    return StepCounter(clamped, if (usesPatternRows() || usesShapingRounds()) 0 else patternRow)
 }
+
+/**
+ * The counters after knitting one round ([delta] = 1) of an increases or decreases step, or taking one back (-1);
+ * null if the step has no interval. The last round of an interval is the one that makes the increase or decrease.
+ */
+fun Step.counterAfterShapingRound(delta: Int): StepCounter? {
+    if (!usesShapingRounds()) return null
+    val interval = shapingInterval ?: return null
+    val count = progressTarget() ?: return null
+    return when {
+        delta > 0 && progress >= count -> StepCounter(progress, 0)
+        delta > 0 -> if (patternRow + 1 >= interval) StepCounter(progress + 1, 0) else StepCounter(progress, patternRow + 1)
+        patternRow > 0 -> StepCounter(progress, patternRow - 1)
+        progress > 0 -> StepCounter(progress - 1, interval - 1)
+        else -> StepCounter(0, 0)
+    }
+}
+
+/** The counters after one row or round in direction [delta] on a pattern or shaping step, or null for any other. */
+fun Step.counterAfterRowStep(delta: Int): StepCounter? =
+    if (type == StepType.Pattern) counterAfterPatternRowStep(delta) else counterAfterShapingRound(delta)
 
 /**
  * The counters after moving a pattern step [delta] rows, or null if it is not a pattern step.
@@ -38,10 +60,11 @@ private fun Step.usesPatternRows() = type == StepType.Pattern && !trackInCm
 
 /**
  * The counters after one tap of a remote control (the watch) in direction [delta], or null for steps without a counter.
- * A pattern step moves one row; any other step moves like the + and - buttons of its counter in the app do.
+ * A pattern step moves one row and a shaping step with an interval one round; any other step moves like the + and -
+ * buttons of its counter in the app do.
  */
 fun Step.counterAfterStepping(delta: Int): StepCounter? =
-    if (type == StepType.Pattern) counterAfterPatternRowStep(delta)
+    if (type == StepType.Pattern || usesShapingRounds()) counterAfterRowStep(delta)
     else counterAfterSettingProgress(if (delta > 0) progress + increment() else progress - decrement())
 
 /** The step a remote control works on, together with its project. */
@@ -104,12 +127,13 @@ class CounterRepository(private val dao: ProjectDao) {
 
     suspend fun setProgress(step: Step, progress: Int) {
         val counter = step.counterAfterSettingProgress(progress) ?: return
-        if (step.usesPatternRows()) dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
+        if (step.usesPatternRows() || step.usesShapingRounds()) dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
         else dao.updateStepProgress(step.id, counter.progress)
     }
 
+    /** Moves a pattern step one row, or a shaping step one round. */
     suspend fun stepPatternRow(step: Step, delta: Int) {
-        val counter = step.counterAfterPatternRowStep(delta) ?: return
+        val counter = step.counterAfterRowStep(delta) ?: return
         dao.updatePatternProgress(step.id, counter.progress, counter.patternRow)
     }
 }

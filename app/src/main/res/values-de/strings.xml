@@ -143,6 +143,12 @@
         <item quantity="other">%1$d Zunahmen</item>
     </plurals>
     <string name="pattern_row_progress">%1$d / %2$d Reihen</string>
+    <string name="step_shaping_interval_optional">Jede n-te Runde (optional)</string>
+    <string name="detail_shaping_interval">Abstand</string>
+    <string name="shaping_interval_value">Alle %1$d Runden</string>
+    <string name="shaping_round_progress">Runde %1$d von %2$d</string>
+    <string name="shaping_increase_now">Jetzt zunehmen</string>
+    <string name="shaping_decrease_now">Jetzt abnehmen</string>
     <string name="add_count">+%1$s</string>
     <string name="remove_count">−%1$s</string>
     <plurals name="stitches_count">

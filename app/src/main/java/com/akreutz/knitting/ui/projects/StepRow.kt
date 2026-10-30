@@ -59,6 +59,7 @@ import com.akreutz.knitting.data.increment
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.usesShapingRounds
 import com.akreutz.knitting.ui.theme.Spacing
 import java.text.NumberFormat
 
@@ -324,7 +325,9 @@ private fun Step.targetDetails(): List<StepDetail> {
     // A step that is only checked off has no amount to show.
     val amount = (target ?: targetRows)?.takeIf { unitRes() != null }
         ?.let { StepDetail(if (trackInCm) R.string.detail_target_length else R.string.detail_target_count, amountText(it)) }
-    return listOfNotNull(kind, amount)
+    val interval = shapingInterval?.takeIf { usesShapingRounds() }
+        ?.let { StepDetail(R.string.detail_shaping_interval, stringResource(R.string.shaping_interval_value, it)) }
+    return listOfNotNull(kind, amount, interval)
 }
 
 /** The label on a counter's buttons, like "+1", "−1" or "Mark done", in the font of the app's titles. */

@@ -8,7 +8,7 @@ import androidx.room.RoomDatabase.JournalMode
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Project::class, Step::class], version = 21, exportSchema = false)
+@Database(entities = [Project::class, Step::class], version = 22, exportSchema = false)
 abstract class KnittingDatabase : RoomDatabase() {
     abstract fun projectDao(): ProjectDao
 
@@ -31,6 +31,13 @@ abstract class KnittingDatabase : RoomDatabase() {
             }
         }
 
+        /** Adds the round interval of increases and decreases. */
+        private val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE steps ADD COLUMN shapingInterval INTEGER")
+            }
+        }
+
         fun get(context: Context): KnittingDatabase =
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
@@ -40,7 +47,7 @@ abstract class KnittingDatabase : RoomDatabase() {
                 )
                     // Only versions before 19 are wiped; from 19 on, schema changes need a migration.
                     .fallbackToDestructiveMigrationFrom(true, *IntArray(18) { it + 1 })
-                    .addMigrations(MIGRATION_19_20, MIGRATION_20_21)
+                    .addMigrations(MIGRATION_19_20, MIGRATION_20_21, MIGRATION_21_22)
                     // Auto Backup copies only knitting.db, so keep all data in that one file (no WAL).
                     .setJournalMode(JournalMode.TRUNCATE)
                     .build()

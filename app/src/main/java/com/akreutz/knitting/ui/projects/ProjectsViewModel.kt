@@ -10,6 +10,7 @@ import com.akreutz.knitting.data.ProjectStatus
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.usesShapingRounds
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.StateFlow
@@ -44,6 +45,7 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         description = description,
         shapingCount = shapingCount,
         pattern = pattern,
+        shapingInterval = shapingInterval,
         patternType = patternType,
         rowPattern = rowPattern,
         patternRows = patternRows,
@@ -70,7 +72,10 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { counters.setProgress(step, progress) }
     }
 
-    /** Moves a pattern step one row forward or back; finishing a repeat's last row completes that repeat. */
+    /**
+     * Moves a pattern step one row forward or back, where finishing a repeat's last row completes that repeat, or a
+     * shaping step one round, where the last round of its interval makes the increase or decrease.
+     */
     fun stepPatternRow(step: Step, delta: Int) {
         viewModelScope.launch { counters.stepPatternRow(step, delta) }
     }
@@ -126,6 +131,8 @@ class ProjectsViewModel(application: Application) : AndroidViewModel(application
                     (updated.trackInCm || progress < (updated.progressTarget() ?: 0))
                 ) {
                     old.patternRow.coerceIn(0, patternRows - 1)
+                } else if (updated.usesShapingRounds() && progress < (updated.progressTarget() ?: 0)) {
+                    old.patternRow.coerceIn(0, (updated.shapingInterval ?: 1) - 1)
                 } else {
                     0
                 }

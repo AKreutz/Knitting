@@ -5,6 +5,7 @@ import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.decrement
 import com.akreutz.knitting.data.increment
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.usesShapingRounds
 
 /** What the watch asks of the phone. The phone always acts on its own current step, never on one the watch names. */
 sealed interface WatchCommand {
@@ -20,7 +21,8 @@ sealed interface WatchCommand {
  *
  * Watch to phone: `{"cmd": "inc" | "dec" | "sync"}`.
  * Phone to watch: `{"p": project, "s": step, "t": step type, "prog": n, "max": n, "inc": n, "dec": n}`, plus `"row"`
- * and `"rows"` for pattern steps and `"cm": 1` when the counts are millimeters; `{"idle": 1}` when there is nothing
+ * and `"rows"` for pattern steps (and for increases and decreases worked every few rounds, where they are the
+ * rounds of the interval) and `"cm": 1` when the counts are millimeters; `{"idle": 1}` when there is nothing
  * to count. `inc` and `dec` are how much one tap adds or removes, in the units of `prog` (one row for a pattern step),
  * so the watch can label its buttons.
  */
@@ -40,18 +42,23 @@ object WatchProtocol {
 
     fun encode(current: CurrentCounter?): Map<String, Any> {
         val step = current?.step ?: return mapOf("idle" to 1)
+        val byRow = step.type == StepType.Pattern || step.usesShapingRounds()
         val message = mutableMapOf<String, Any>(
             "p" to current.project.name.take(MAX_NAME_LENGTH),
             "s" to step.name.take(MAX_NAME_LENGTH),
             "t" to step.type.name,
             "prog" to step.progress,
             "max" to (step.progressTarget() ?: 0),
-            "inc" to if (step.type == StepType.Pattern) 1 else step.increment(),
-            "dec" to if (step.type == StepType.Pattern) 1 else step.decrement(),
+            "inc" to if (byRow) 1 else step.increment(),
+            "dec" to if (byRow) 1 else step.decrement(),
         )
         if (step.type == StepType.Pattern) {
             message["row"] = step.patternRow
             message["rows"] = step.patternRows ?: 0
+        } else if (step.usesShapingRounds()) {
+            // The watch counts these like the rows of a pattern: the rounds of the interval.
+            message["row"] = step.patternRow
+            message["rows"] = step.shapingInterval ?: 0
         }
         if (step.trackInCm) message["cm"] = 1
         return message

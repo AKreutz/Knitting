@@ -38,6 +38,8 @@ data class Step(
     val shapingCount: Int? = null,
     /** Increases and decreases: where they go, e.g. "every 4th row". */
     val pattern: String? = null,
+    /** Increases and decreases: make one every this many rounds (at least 2), counted in [patternRow]. */
+    val shapingInterval: Int? = null,
     /** Pattern: what kind of pattern the grid describes. */
     val patternType: PatternType? = null,
     /** Pattern: grid size. */
@@ -64,11 +66,18 @@ data class Step(
      * progress; millimeters when [trackInCm] is set.
      */
     val progress: Int = 0,
-    /** Pattern: rows of the current repeat already knitted, tracked while in progress. */
+    /**
+     * Pattern: rows of the current repeat already knitted; increases and decreases with a [shapingInterval]: rounds
+     * since the last one. Tracked while in progress.
+     */
     val patternRow: Int = 0,
 )
 
 const val MM_PER_CM = 10
+
+/** Whether this is an increases or decreases step that is worked every few rounds, so its rounds are counted too. */
+fun Step.usesShapingRounds(): Boolean =
+    (type == StepType.Increases || type == StepType.Decreases) && (shapingInterval ?: 0) >= 2
 
 /** What [Step.progress] counts up to, or null for step types that have no counter. */
 fun Step.progressTarget(): Int? = when (type) {

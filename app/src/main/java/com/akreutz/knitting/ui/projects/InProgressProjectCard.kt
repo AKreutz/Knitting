@@ -59,6 +59,7 @@ import com.akreutz.knitting.data.Project
 import com.akreutz.knitting.data.Step
 import com.akreutz.knitting.data.StepType
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.usesShapingRounds
 import com.akreutz.knitting.data.weightedProgress
 import com.akreutz.knitting.ui.theme.Spacing
 import java.util.concurrent.TimeUnit
@@ -298,6 +299,10 @@ private fun CurrentStepPanel(
             if (step.type == StepType.Pattern && rows != null && target != null && onPatternRowStep != null) {
                 PatternRowCounter(step, rows, target, onPatternRowStep, panelButtonColors())
             }
+            val interval = step.shapingInterval
+            if (step.usesShapingRounds() && interval != null && target != null && onPatternRowStep != null) {
+                ShapingRoundCounter(step, interval, target, onPatternRowStep, panelButtonColors())
+            }
         }
         }
     }
@@ -381,6 +386,56 @@ private fun PatternRowCounter(
                 onRowStep(step, 1)
             },
             enabled = step.trackInCm || step.progress < repeats,
+            colors = buttonColors,
+            modifier = Modifier.padding(start = Spacing.sm),
+        ) {
+            CounterButtonLabel(stringResource(R.string.add_count, "1"))
+        }
+    }
+}
+
+/** Counts the rounds between the increases or decreases of a shaping step; the last round of the interval makes one. */
+@Composable
+private fun ShapingRoundCounter(
+    step: Step,
+    interval: Int,
+    count: Int,
+    onRoundStep: (Step, Int) -> Unit,
+    buttonColors: ButtonColors,
+) {
+    val haptics = LocalHapticFeedback.current
+    val increases = step.type == StepType.Increases
+    val due = step.progress < count && step.patternRow == interval - 1
+    val text = stringResource(R.string.shaping_round_progress, step.patternRow + 1, interval) +
+        if (due) " · " + stringResource(if (increases) R.string.shaping_increase_now else R.string.shaping_decrease_now) else ""
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(top = Spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        AnimatedContent(
+            targetState = text,
+            transitionSpec = { countTransition() },
+            label = "shaping round progress",
+            modifier = Modifier.weight(1f),
+        ) { shown ->
+            Text(text = shown, style = MaterialTheme.typography.titleMedium)
+        }
+        FilledTonalButton(
+            onClick = {
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                onRoundStep(step, -1)
+            },
+            enabled = step.progress > 0 || step.patternRow > 0,
+            colors = buttonColors,
+        ) {
+            CounterButtonLabel(stringResource(R.string.remove_count, "1"))
+        }
+        FilledTonalButton(
+            onClick = {
+                haptics.performHapticFeedback(if (due) HapticFeedbackType.Confirm else HapticFeedbackType.SegmentTick)
+                onRoundStep(step, 1)
+            },
+            enabled = step.progress < count,
             colors = buttonColors,
             modifier = Modifier.padding(start = Spacing.sm),
         ) {

@@ -123,6 +123,8 @@ const T = de ? {
   rowPatterns: { AllKnit: 'Alle rechts', AllPurl: 'Alle links', Ribbing1x1: '1 re, 1 li', Ribbing2x2: '2 re, 2 li' },
   detail: { method: 'Methode', needle: 'Nadelstärke', shaping: 'Muster' }, patternType: 'Mustertyp', rowPattern: 'Muster',
   patternTypes: { Cables: 'Zopfmuster', Colorwork: 'Farbmuster' }, count: 'Anzahl', length: 'Länge',
+  round: (n, every) => 'Runde ' + n + ' von ' + every, now: { Increases: 'Jetzt zunehmen', Decreases: 'Jetzt abnehmen' },
+  every: 'Abstand', everyValue: n => 'Alle ' + n + ' Runden',
   rows: 'Reihen', cm: 'cm', markDone: 'Erledigt', undo: 'Zurück', add: 'Hinzufügen', remove: 'Abziehen', decimal: ','
 } : {
   title: 'In progress', none: 'No projects in progress.', pin: 'Enter the PIN shown on the phone:', offline: 'Cannot reach the phone.',
@@ -133,6 +135,8 @@ const T = de ? {
   rowPatterns: { AllKnit: 'All knit', AllPurl: 'All purl', Ribbing1x1: '1K1P', Ribbing2x2: '2K2P' },
   detail: { method: 'Method', needle: 'Needle size', shaping: 'Pattern' }, patternType: 'Pattern type', rowPattern: 'Pattern',
   patternTypes: { Cables: 'Cables', Colorwork: 'Colorwork' }, count: 'Count', length: 'Length',
+  round: (n, every) => 'Round ' + n + ' of ' + every, now: { Increases: 'Increase now', Decreases: 'Decrease now' },
+  every: 'Interval', everyValue: n => 'Every ' + n + ' rounds',
   rows: 'rows', cm: 'cm', markDone: 'Done', undo: 'Undo', add: 'Add', remove: 'Subtract', decimal: '.'
 };
 document.documentElement.lang = de ? 'de' : 'en';
@@ -168,6 +172,8 @@ const el = (tag, className, text) => {
 // Millimeters are shown as centimeters, as in the app.
 const num = (step, value) => step.cm ? String(value / 10).replace('.', T.decimal) : String(value);
 const isPattern = step => step.type === 'Pattern';
+// Patterns and increases or decreases worked every few rounds are counted by rows or rounds, not by their count.
+const byRow = step => isPattern(step) || !!step.every;
 
 function countText(step) {
   if (step.type === 'Special') return step.prog ? '✓' : '–';
@@ -183,16 +189,17 @@ function button(label, aria, disabled, step, delta) {
   return b;
 }
 
-// The buttons of a step: one tap moves a row on a pattern, otherwise what the + and - buttons of the app move.
+// The buttons of a step: one tap moves a row on a pattern or a round on a shaping step, otherwise what the + and - buttons of the app move.
 function buttons(step) {
   const wrap = el('span', 'btns');
   if (step.type === 'Special') {
     wrap.append(step.prog ? button(T.undo, T.undo, false, step, -1) : button(T.markDone, T.markDone, false, step, 1));
     return wrap;
   }
-  const dec = isPattern(step) ? 1 : step.dec, inc = isPattern(step) ? 1 : step.inc;
-  const label = n => step.cm && !isPattern(step) ? num(step, n) : String(n);
-  const minusOff = isPattern(step) ? !step.cm && step.prog === 0 && step.row === 0 : step.prog === 0;
+  const dec = byRow(step) ? 1 : step.dec, inc = byRow(step) ? 1 : step.inc;
+  const label = n => step.cm && !byRow(step) ? num(step, n) : String(n);
+  const minusOff = isPattern(step) ? !step.cm && step.prog === 0 && step.row === 0
+    : step.every ? step.prog === 0 && step.round === 0 : step.prog === 0;
   const plusOff = isPattern(step) && step.cm ? false : step.prog >= step.max;
   wrap.append(
     button('−' + label(dec), T.remove, minusOff, step, -1),
@@ -352,6 +359,14 @@ function appendCounters(parent, step) {
     const rows = el('div', 'counter');
     rows.append(el('span', 'count', step.row + ' / ' + step.rows + ' ' + T.rows), buttons(step));
     parent.append(rows);
+  } else if (step.every) {
+    // The count only grows with the last round of each interval, so the buttons below move a round.
+    counter.append(el('span', 'count', countText(step)));
+    parent.append(counter);
+    const due = step.prog < step.max && step.round === step.every - 1;
+    const rounds = el('div', 'counter');
+    rounds.append(el('span', 'count', T.round(step.round + 1, step.every) + (due ? ' · ' + T.now[step.type] : '')), buttons(step));
+    parent.append(rounds);
   } else {
     counter.append(el('span', 'count', countText(step)), buttons(step));
     parent.append(counter);
@@ -379,6 +394,7 @@ function chips(step) {
   if (isPattern(step)) { if (step.ptype) list.push([T.patternType, T.patternTypes[step.ptype]]); }
   else if (step.rowPattern) list.push([T.rowPattern, T.rowPatterns[step.rowPattern]]);
   if (step.type !== 'Special' && step.max) list.push([step.cm ? T.length : T.count, num(step, step.max) + ' ' + (step.cm ? T.cm : T.units[step.type])]);
+  if (step.every) list.push([T.every, T.everyValue(step.every)]);
   for (const d of step.details || []) if (d.k !== 'description') list.push([T.detail[d.k], d.v]);
   return list;
 }

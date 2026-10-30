@@ -67,6 +67,7 @@ data class NewStep(
     val description: String? = null,
     val shapingCount: Int? = null,
     val pattern: String? = null,
+    val shapingInterval: Int? = null,
     val patternType: PatternType? = null,
     val rowPattern: RowPattern? = null,
     val patternRows: Int? = null,
@@ -87,6 +88,7 @@ internal fun Step.toNewStep() = NewStep(
     description = description,
     shapingCount = shapingCount,
     pattern = pattern,
+    shapingInterval = shapingInterval,
     patternType = patternType,
     rowPattern = rowPattern,
     patternRows = patternRows,
@@ -144,6 +146,7 @@ fun AddStepDialog(
     var description by rememberSaveable { mutableStateOf(initial?.description.orEmpty()) }
     var shapingCount by rememberSaveable { mutableStateOf(initial?.shapingCount?.toString().orEmpty()) }
     var pattern by rememberSaveable { mutableStateOf(initial?.pattern.orEmpty()) }
+    var shapingInterval by rememberSaveable { mutableStateOf(initial?.shapingInterval?.toString().orEmpty()) }
     var patternType by rememberSaveable { mutableStateOf(initial?.patternType ?: PatternType.Cables) }
     var rowPattern by rememberSaveable { mutableStateOf(initial?.rowPattern ?: RowPattern.AllKnit) }
     var gridRows by rememberSaveable { mutableStateOf(initial?.patternRows?.toString().orEmpty()) }
@@ -185,6 +188,8 @@ fun AddStepDialog(
                 type = type,
                 shapingCount = it,
                 pattern = pattern.trim().ifEmpty { null },
+                // An interval of 1 would be every round, which is just counting the increases or decreases.
+                shapingInterval = shapingInterval.toIntOrNull()?.takeIf { it >= 2 },
             )
         }
         StepType.CastOn -> stitches?.takeIf { it > 0 }?.let {
@@ -287,6 +292,11 @@ fun AddStepDialog(
                         value = shapingCount,
                         onValueChange = { shapingCount = it },
                         labelRes = if (increases) R.string.step_increase_count else R.string.step_decrease_count,
+                    )
+                    NumberField(
+                        value = shapingInterval,
+                        onValueChange = { shapingInterval = it },
+                        labelRes = R.string.step_shaping_interval_optional,
                     )
                     OutlinedTextField(
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),

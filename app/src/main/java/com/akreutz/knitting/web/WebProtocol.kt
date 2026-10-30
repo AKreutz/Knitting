@@ -8,6 +8,7 @@ import com.akreutz.knitting.data.completedFraction
 import com.akreutz.knitting.data.decrement
 import com.akreutz.knitting.data.increment
 import com.akreutz.knitting.data.progressTarget
+import com.akreutz.knitting.data.usesShapingRounds
 import com.akreutz.knitting.data.weightedProgress
 import com.akreutz.knitting.ui.projects.yarnColorOrNull
 import java.util.Locale
@@ -23,7 +24,8 @@ data class WebStep(val stepId: Long, val delta: Int)
  * `"color"`, `"shade"` (`#rrggbb`, only for a color name the app knows), `"rowPattern"` and `"details"` (`{"k": method, needle,
  * shaping or description, "v": the entered text}`)
  * where the step has them, `"cols"`, `"ptype"` and `"cells"` (as stored in the step) on a pattern step with a grid,
- * `"row"` and `"rows"` on pattern steps and `"cm": true` when the counts are millimeters; `{"project": null}` when no
+ * `"row"` and `"rows"` on pattern steps, `"round"` and `"every"` (rounds since the last one, and the interval) on
+ * increases and decreases worked every few rounds, and `"cm": true` when the counts are millimeters; `{"project": null}` when no
  * project is in progress. `inc` and `dec` are how much one tap adds or removes, as for the watch.
  *
  * Browser to phone: a form body `step=<id>&delta=1|-1`.
@@ -39,14 +41,16 @@ object WebProtocol {
 
     private fun encode(step: Step, current: Boolean): String {
         val pattern = step.type == StepType.Pattern
+        // A tap on a pattern moves a row and on a shaping step with an interval a round, never the count itself.
+        val byRow = pattern || step.usesShapingRounds()
         val fields = mutableListOf(
             """"id":${step.id}""",
             """"name":${quote(step.name)}""",
             """"type":${quote(step.type.name)}""",
             """"prog":${step.progress}""",
             """"max":${step.progressTarget() ?: 0}""",
-            """"inc":${if (pattern) 1 else step.increment()}""",
-            """"dec":${if (pattern) 1 else step.decrement()}""",
+            """"inc":${if (byRow) 1 else step.increment()}""",
+            """"dec":${if (byRow) 1 else step.decrement()}""",
             """"current":$current""",
             """"done":${(step.completedFraction() ?: 0f) >= 1f}""",
         )
@@ -60,6 +64,10 @@ object WebProtocol {
                 step.patternType?.let { fields += """"ptype":${quote(it.name)}""" }
                 step.patternCells?.takeIf { it.length == rows * columns }?.let { fields += """"cells":${quote(it)}""" }
             }
+        }
+        if (step.usesShapingRounds()) {
+            fields += """"round":${step.patternRow}"""
+            fields += """"every":${step.shapingInterval}"""
         }
         if (step.trackInCm) fields += """"cm":true"""
         step.color?.let { color ->

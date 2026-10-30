@@ -142,6 +142,12 @@
         <item quantity="other">%1$d increases</item>
     </plurals>
     <string name="pattern_row_progress">%1$d / %2$d rows</string>
+    <string name="step_shaping_interval_optional">Every n-th round (optional)</string>
+    <string name="detail_shaping_interval">Interval</string>
+    <string name="shaping_interval_value">Every %1$d rounds</string>
+    <string name="shaping_round_progress">Round %1$d of %2$d</string>
+    <string name="shaping_increase_now">Increase now</string>
+    <string name="shaping_decrease_now">Decrease now</string>
     <string name="add_count">+%1$s</string>
     <string name="remove_count">−%1$s</string>
     <plurals name="stitches_count">
