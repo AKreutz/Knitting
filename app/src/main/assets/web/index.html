@@ -113,7 +113,8 @@
   <div id="content"></div>
 </main>
 <script>
-const de = (navigator.language || '').startsWith('de');
+// The phone sets the page's language to the app's when it serves the page.
+const de = document.documentElement.lang === 'de';
 const T = de ? {
   title: 'In Arbeit', none: 'Keine Projekte in Arbeit.', pin: 'PIN vom Handy eingeben:', offline: 'Keine Verbindung zum Handy.',
   current: 'Aktueller Schritt', allDone: 'Alle Schritte erledigt', prev: n => 'Vorherige Schritte (' + n + ')',
@@ -139,7 +140,6 @@ const T = de ? {
   every: 'Interval', everyValue: n => 'Every ' + n + ' rounds',
   rows: 'rows', cm: 'cm', markDone: 'Done', undo: 'Undo', add: 'Add', remove: 'Subtract', decimal: '.'
 };
-document.documentElement.lang = de ? 'de' : 'en';
 document.title = 'Knitting';
 const $ = id => document.getElementById(id);
 $('title').textContent = T.title;

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -22,6 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.Locale
 
 /** Keeps the app alive while the web server runs, so a browser on the same network can read and change the counters. */
 class WebCounterService : Service() {
@@ -38,7 +40,7 @@ class WebCounterService : Service() {
                 val server = CounterWebServer(
                     port = WebSettings.PORT,
                     pin = { WebSettings.pin(applicationContext) },
-                    page = { assets.open(PAGE).use { it.readBytes() } },
+                    page = { page() },
                     state = { WebProtocol.encode(counters.active()) },
                     step = { counters.stepStep(it.stepId, it.delta) },
                 )
@@ -62,6 +64,14 @@ class WebCounterService : Service() {
         // A failure stays visible in the web menu; anything else just means the server is no longer running.
         if (WebStatus.connection.value != WebConnection.Error) WebStatus.set(WebConnection.Off)
         super.onDestroy()
+    }
+
+    /** The page in the app's language, which the user may have set apart from the phone's. */
+    private fun page(): ByteArray {
+        val locale = AppCompatDelegate.getApplicationLocales()[0] ?: Locale.getDefault()
+        val language = if (locale.language == "de") "de" else "en"
+        val html = assets.open(PAGE).use { it.readBytes().decodeToString() }
+        return html.replace("<html lang=\"en\">", "<html lang=\"$language\">").toByteArray()
     }
 
     private fun startInForeground() {
